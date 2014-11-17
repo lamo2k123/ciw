@@ -14,20 +14,13 @@ var fs          = require('fs'),
 
     // Custom
     Checker     = require('./modules/checker'),
-    Statement   = require('./modules/statement');
+    Statement   = require('./modules/statement'),
+    Updater     = require('./modules/updater');
 
     // Variables
     config      = null;
 
-/*var file = fs.readFileSync('test.txt');
-
-console.log(file.toString().indexOf('1.1.11\n'));
-//console.log(file, file.indexOf('1.1.111'));
-//if(file.indexOf('1.1.111')) {
-
-//}
-
-return;*/
+// https://api.github.com/repos/lamo2k123/ci-wezzet/tags
 
 Statement.args = process.argv.slice(2);
 
@@ -37,6 +30,7 @@ var rli = readline.createInterface({
 });
 
 async.series([
+    Updater.checkUpdate.bind(Updater, rli),
     Checker.config.checkFile.bind(Checker.config, rli),
     Checker.config.checkParams.bind(Checker.config, rli),
     Checker.transmitted.checkParams.bind(Checker.transmitted, rli),
