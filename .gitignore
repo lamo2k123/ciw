@@ -1,0 +1,13 @@
+# Created by .gitignore support plugin (hsz.mobi)
+node_modules
+.idea
+_config.json
+CI-TLS-1.2.1-STEP-1-1415786160950.log
+config.json
+CI-tls-1.2.1-STEP-1-1415800223619.log
+CI-TLS-1.2.1.log
+test.txt
+CI-DYNBLS-1.1.11.log
+CI.rar
+fields.log
+CI-TLS-1.2.1-STEP-1-1415786094675.log
