@@ -268,7 +268,8 @@ async.series([
                             break;
 
                         case 'git tag' :
-                            console.log(response);
+                            response = response.replace(folder, '');
+
                             if(response.indexOf(version) !== -1) {
                                 sshObj.commands.push('git merge ' + config.branch.dev);
                                 log.info('Тег ' + version + ' уже существует, значит делае слияние.');
@@ -279,7 +280,9 @@ async.series([
                             break;
 
                         case 'git tag ' + version:
-                            if(response.indexOf(version + "\n") !== -1) {
+                            response = response.replace(folder, '');
+
+                            if(response.indexOf(version) !== -1) {
                                 log.info('Создан тег ' + version);
                                 sshObj.commands.push('git push --tags');
                                 log.info('Отправка тегов');
