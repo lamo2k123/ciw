@@ -1,7 +1,8 @@
 require('./modules/expansion');
 
 var fs          = require('fs'),
-    util        = require('util'),
+	util        = require('util'),
+	events		= require('events'),
     readline    = require('readline'),
 
     // Vendors
@@ -13,6 +14,8 @@ var fs          = require('fs'),
     colors      = require('colors'),
 
     // Custom
+	Manager		= require('./modules/manager'),
+	Notification= require('./modules/notification')(Manager),
     Checker     = require('./modules/checker'),
     Statement   = require('./modules/statement'),
     Updater     = require('./modules/updater');
@@ -41,7 +44,7 @@ async.series([
     }
 ], function() {
 
-    var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = null,
+    var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = jiraProjectName = null,
         issuesVersion = [],
         flag    = step2 = installFlag = stopNode = false,
         jira    = new JiraApi(config.service.jira.protocol, config.service.jira.host, config.service.jira.port, config.service.jira.user, config.service.jira.password, config.service.jira.api);
@@ -100,7 +103,8 @@ async.series([
                 } else {
                     log.info('Проверка версии ' + version + ' в ' + projectJira.name);
 
-                    jiraNameVersion = config.projects[project].jira['version-name'].replace('{version}', version)
+                    jiraNameVersion = config.projects[project].jira['version-name'].replace('{version}', version);
+					jiraProjectName = projectJira.name;
 
                     var versionJira = _.findWhere(projectJira.versions, {
                         name : jiraNameVersion
@@ -417,6 +421,7 @@ async.series([
                     }
                 },
                 onEnd: function(sessionText, sshObj) {
+					Manager.events.emit('notification:hip-chat:buildComplete', jiraNameVersion, jiraProjectName);
 
                     fs.writeFile([__dirname, folder + '.log'].join('/'), sessionText, function(error) {
                         if(error) {

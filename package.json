@@ -10,6 +10,6 @@
     "unzip": "~0.1.11",
     "request": "~2.48.0",
     "fs-extra": "~0.12.0",
-    "color-log": "0.0.2"
+    "hipchat-client": "~1.0.2"
   }
 }
