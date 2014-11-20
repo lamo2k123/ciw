@@ -1,4 +1,5 @@
 {
-  "git-repo": "application-name",
-  "version": "0.0.1"
+  	"git-repo": "https://api.github.com/repos/lamo2k123/ciw/tags",
+	"update-folder" : "update",
+	"update-file-name" : "update-{sha}"
 }

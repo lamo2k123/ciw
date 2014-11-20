@@ -1,6 +1,6 @@
 {
-	"token" : "*************************",
-  	"room" : 0000000,
+	"token" : null,
+  	"room" : null,
   	"from" : "[CIW]",
   	"color" : "green",
   	"format" : "html",

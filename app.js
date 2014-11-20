@@ -16,9 +16,9 @@ var fs          = require('fs'),
     // Custom
 	Manager		= require('./modules/manager'),
 	Notification= require('./modules/notification')(Manager),
+	Updater     = require('./modules/updater')(Manager),
     Checker     = require('./modules/checker'),
-    Statement   = require('./modules/statement'),
-    Updater     = require('./modules/updater');
+    Statement   = require('./modules/statement');
 
     // Variables
     config      = null;
@@ -32,12 +32,21 @@ var rli = readline.createInterface({
     output  : process.stdout
 });
 
-
-Manager.events.emit('notification:hip-chat:buildComplete', '0.0.0.0', 'TEST');
-return;
-
 async.series([
-    Updater.checkUpdate.bind(Updater, rli),
+	function(callback) {
+		Manager.events.emit('updater:set:rli', rli);
+
+		Manager.events.once('updater:complete', callback);
+		Manager.events.once('updater:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkFileVersion'));
+		Manager.events.once('updater:checkFileVersion:complete', Manager.events.emit.bind(Manager.events, 'updater:checkUpdate'));
+		Manager.events.once('updater:checkUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:downloadUpdate'));
+		Manager.events.once('updater:downloadUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:installUpdate'));
+
+		Manager.events.emit('updater:checkFileConfig');
+
+		return;
+	},
+//    Updater.checkUpdate.bind(Updater, rli),
     Checker.config.checkFile.bind(Checker.config, rli),
     Checker.config.checkParams.bind(Checker.config, rli),
     Checker.transmitted.checkParams.bind(Checker.transmitted, rli),
