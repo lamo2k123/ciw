@@ -59,7 +59,8 @@ Notification.prototype.buildCompleteHipChat = function(version, project, version
 		from			: this.config.from || '[CIW]',
 		message			: message,
 		color			: this.config.color || 'green',
-		message_format 	: this.config.format || 'html'
+		message_format 	: this.config.format || 'html',
+		notify			: this.config.notify || false
 	}, function(error, response) {
 		if(error) {
 			console.log(colors.error('При отправке оповещения в Hip-Chat произошла ошибка!'));
