@@ -1,0 +1,11 @@
+{
+	"token" : "*************************",
+  	"room" : 0000000,
+  	"from" : "[CIW]",
+  	"color" : "green",
+  	"format" : "html",
+	"notify" : true,
+  	"messages" : {
+    	"buildComplete" : "Сборка и установка версии <strong>{version}</strong> по проекту <strong>{project}</strong> завершена!<br>Перейти в <a href='{version-link}'>{version}</a><br>Перейти в <a href='{project-link}'>{project}</a>"
+  	}
+}

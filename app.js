@@ -1,7 +1,8 @@
 require('./modules/expansion');
 
 var fs          = require('fs'),
-    util        = require('util'),
+	util        = require('util'),
+	events		= require('events'),
     readline    = require('readline'),
 
     // Vendors
@@ -13,6 +14,8 @@ var fs          = require('fs'),
     colors      = require('colors'),
 
     // Custom
+	Manager		= require('./modules/manager'),
+	Notification= require('./modules/notification')(Manager),
     Checker     = require('./modules/checker'),
     Statement   = require('./modules/statement'),
     Updater     = require('./modules/updater');
@@ -29,6 +32,10 @@ var rli = readline.createInterface({
     output  : process.stdout
 });
 
+
+Manager.events.emit('notification:hip-chat:buildComplete', '0.0.0.0', 'TEST');
+return;
+
 async.series([
     Updater.checkUpdate.bind(Updater, rli),
     Checker.config.checkFile.bind(Checker.config, rli),
@@ -41,7 +48,7 @@ async.series([
     }
 ], function() {
 
-    var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = null,
+    var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = jiraProjectName = null,
         issuesVersion = [],
         flag    = step2 = installFlag = stopNode = false,
         jira    = new JiraApi(config.service.jira.protocol, config.service.jira.host, config.service.jira.port, config.service.jira.user, config.service.jira.password, config.service.jira.api);
@@ -100,7 +107,8 @@ async.series([
                 } else {
                     log.info('Проверка версии ' + version + ' в ' + projectJira.name);
 
-                    jiraNameVersion = config.projects[project].jira['version-name'].replace('{version}', version)
+                    jiraNameVersion = config.projects[project].jira['version-name'].replace('{version}', version);
+					jiraProjectName = projectJira.name;
 
                     var versionJira = _.findWhere(projectJira.versions, {
                         name : jiraNameVersion
@@ -268,7 +276,8 @@ async.series([
                             break;
 
                         case 'git tag' :
-                            console.log(response);
+                            response = response.replace(folder, '');
+
                             if(response.indexOf(version) !== -1) {
                                 sshObj.commands.push('git merge ' + config.branch.dev);
                                 log.info('Тег ' + version + ' уже существует, значит делае слияние.');
@@ -279,7 +288,9 @@ async.series([
                             break;
 
                         case 'git tag ' + version:
-                            if(response.indexOf(version + "\n") !== -1) {
+                            response = response.replace(folder, '');
+
+                            if(response.indexOf(version) !== -1) {
                                 log.info('Создан тег ' + version);
                                 sshObj.commands.push('git push --tags');
                                 log.info('Отправка тегов');
@@ -414,6 +425,7 @@ async.series([
                     }
                 },
                 onEnd: function(sessionText, sshObj) {
+					Manager.events.emit('notification:hip-chat:buildComplete', jiraNameVersion, jiraProjectName);
 
                     fs.writeFile([__dirname, folder + '.log'].join('/'), sessionText, function(error) {
                         if(error) {

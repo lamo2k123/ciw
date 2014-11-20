@@ -60,45 +60,46 @@ Updater.prototype.checkVersion = function(rli, callback, res) {
 		// @TODO: Записать код ответа в лог.
 		console.log(colors.warn('Не Удалось получить информацию по обновлениям!'));
 		callback(null);
-	}
+	} else {
 
-	// @TODO: Класть чанку в буффер.
-	var data = '';
+		// @TODO: Класть чанку в буффер.
+		var data = '';
 
 	res.setEncoding('utf8');
 	res.on('data', function(chunk) {
 		data += chunk;
 	});
 
-	res.on('end', function() {
-		data = JSON.parse(data);
+		res.on('end', function() {
+			data = JSON.parse(data);
 
-		// @TODO: Добавить сравнение хешей версий.
-		if(this.currentVersion !== data[0].name || this.currentHash !== data[0].commit.sha) {
-			console.log(colors.help('Доступна новая версия!'));
-			console.log(colors.help('Версия: ' + data[0].name));
-			console.log(colors.help('Скачать [ZIP]: ' + data[0]['zipball_url']));
-			console.log(colors.help('Скачать [TAR]: ' + data[0]['tarball_url']));
+			// @TODO: Добавить сравнение хешей версий.
+			if(this.currentVersion !== data[0].name || this.currentHash !== data[0].commit.sha) {
+				console.log(colors.help('Доступна новая версия!'));
+				console.log(colors.help('Версия: ' + data[0].name));
+				console.log(colors.help('Скачать [ZIP]: ' + data[0]['zipball_url']));
+				console.log(colors.help('Скачать [TAR]: ' + data[0]['tarball_url']));
 
-			this.version = data[0].name;
-			this.hash = data[0].commit.sha;
-			this.archive = {
-				zip : data[0]['zipball_url'],
-				tar : data[0]['tarball_url']
-			};
+				this.version = data[0].name;
+				this.hash = data[0].commit.sha;
+				this.archive = {
+					zip : data[0]['zipball_url'],
+					tar : data[0]['tarball_url']
+				};
 
-			rli.question('Хотите обновить CIW? [y/N]: ', function(answer) {
-				if(answer.match(/^y(es)?$/i)) {
-					this.download(callback);
-				} else {
-					callback(null);
-				}
-			}.bind(this));
-		} else {
-			callback(null);
-		}
+				rli.question('Хотите обновить CIW? [y/N]: ', function(answer) {
+					if(answer.match(/^y(es)?$/i)) {
+						this.download(callback);
+					} else {
+						callback(null);
+					}
+				}.bind(this));
+			} else {
+				callback(null);
+			}
 
-	}.bind(this));
+		}.bind(this));
+	}
 
 };
 
