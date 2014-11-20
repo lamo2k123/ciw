@@ -3,7 +3,7 @@ node_modules
 .idea
 _config.json
 CI-TLS-1.2.1-STEP-1-1415786160950.log
-config.json
+#config.json
 CI-tls-1.2.1-STEP-1-1415800223619.log
 CI-TLS-1.2.1.log
 test.txt

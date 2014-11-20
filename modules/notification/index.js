@@ -35,7 +35,7 @@ Notification.prototype.initHipChat = function() {
 	return this;
 };
 
-Notification.prototype.buildCompleteHipChat = function(version, project, versionLink) {
+Notification.prototype.buildCompleteHipChat = function(version, project, versionLink, projectLink) {
 	var message = this.config.messages && this.config.messages.buildComplete || '{version} {project}<br>{version-link}';
 
 	if(version) {
@@ -50,12 +50,16 @@ Notification.prototype.buildCompleteHipChat = function(version, project, version
 		message = message.replace(/{version-link}/g, versionLink);
 	}
 
+	if(projectLink) {
+		message = message.replace(/{project-link}/g, projectLink);
+	}
+
 	this.hipChat.api.rooms.message({
 		room_id			: this.config.room,
 		from			: this.config.from || '[CIW]',
 		message			: message,
-		color			: 'green',
-		message_format 	: 'html'
+		color			: this.config.color || 'green',
+		message_format 	: this.config.format || 'html'
 	}, function(error, response) {
 		if(error) {
 			console.log(colors.error('При отправке оповещения в Hip-Chat произошла ошибка!'));

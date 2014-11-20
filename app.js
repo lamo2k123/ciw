@@ -32,6 +32,10 @@ var rli = readline.createInterface({
     output  : process.stdout
 });
 
+
+Manager.events.emit('notification:hip-chat:buildComplete', '0.0.0.0', 'TEST');
+return;
+
 async.series([
     Updater.checkUpdate.bind(Updater, rli),
     Checker.config.checkFile.bind(Checker.config, rli),
