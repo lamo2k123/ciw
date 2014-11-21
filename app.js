@@ -44,9 +44,7 @@ async.series([
 
 		Manager.events.emit('updater:checkFileConfig');
 
-		return;
 	},
-//    Updater.checkUpdate.bind(Updater, rli),
     Checker.config.checkFile.bind(Checker.config, rli),
     Checker.config.checkParams.bind(Checker.config, rli),
     Checker.transmitted.checkParams.bind(Checker.transmitted, rli),
