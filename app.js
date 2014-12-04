@@ -17,7 +17,9 @@ var fs          = require('fs'),
 	Manager		= require('./modules/manager'),
 	Notification= require('./modules/notification')(Manager),
 	Updater     = require('./modules/updater')(Manager),
-    Checker     = require('./modules/checker'),
+    Checker     = require('./modules/checker')(Manager),
+
+	//Jira        = require('./modules/jira')(Manager),
     Statement   = require('./modules/statement');
 
     // Variables
@@ -32,21 +34,33 @@ var rli = readline.createInterface({
     output  : process.stdout
 });
 
+
+Manager.events.emit('updater:set:rli', rli);
+Manager.events.emit('checker:config:set', {rli : rli});
+
+Manager.events.once('updater:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkFileConfig'));
+Manager.events.once('updater:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkFileVersion'));
+Manager.events.once('updater:checkFileVersion:complete', Manager.events.emit.bind(Manager.events, 'updater:checkUpdate'));
+Manager.events.once('updater:checkUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:downloadUpdate'));
+Manager.events.once('updater:downloadUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:installUpdate'));
+
+//Manager.events.once('checker:config:complete', callback);
+Manager.events.once('checker:config:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkConfigParams'));
+
+Manager.events.emit('updater:checkFileConfig');
+
+
+return;
+
 async.series([
-	function(callback) {
-		Manager.events.emit('updater:set:rli', rli);
+    function(callback) {
+        Manager.events.once('checker:config:complete', callback);
+        Manager.events.once('checker:config:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkConfigParams'));
 
-		Manager.events.once('updater:complete', callback);
-		Manager.events.once('updater:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkFileVersion'));
-		Manager.events.once('updater:checkFileVersion:complete', Manager.events.emit.bind(Manager.events, 'updater:checkUpdate'));
-		Manager.events.once('updater:checkUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:downloadUpdate'));
-		Manager.events.once('updater:downloadUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:installUpdate'));
-
-		Manager.events.emit('updater:checkFileConfig');
-
-	},
-    Checker.config.checkFile.bind(Checker.config, rli),
-    Checker.config.checkParams.bind(Checker.config, rli),
+        Manager.events.emit('checker:config:checkFileConfig');
+    },
+    //Checker.config.checkFile.bind(Checker.config, rli),
+    //Checker.config.checkParams.bind(Checker.config, rli),
     Checker.transmitted.checkParams.bind(Checker.transmitted, rli),
     function(callback) {
         config = Statement.getConfig();

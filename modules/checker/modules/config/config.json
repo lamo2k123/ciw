@@ -1,0 +1,38 @@
+{
+    "global-config-file": "./config.json",
+    "params" : [
+        {
+            "type" : "string",
+            "name" : "dir",
+            "default" : "/tmp",
+            "message" : {
+                "warn" : "[CHECKER] Не указана директория для временных файлов!",
+                "question" : "[CHECKER] Введите путь к временной директории (Default: '/tmp'):"
+            }
+        }, {
+            "type" : "string",
+            "name" : "timeout",
+            "default" : 30000,
+            "message" : {
+                "warn" : "[CHECKER] Не указано время таймаута процесса!",
+                "question" : "[CHECKER] Введите таймаута процесса (Default: 30000):"
+            }
+        }, {
+            "type" : "object",
+            "name" : "branch",
+            "default" : {}
+        }, {
+            "type" : "string",
+            "name" : [
+                "branch",
+                "dev"
+            ],
+            "default" : "develop",
+            "message" : {
+              "warn" : "[CHECKER] Не указана GIT ветка разработки!",
+              "question" : "[CHECKER] Введите название ветки разработки (Default: develop):"
+            }
+        }
+
+    ]
+}

@@ -1,5 +1,7 @@
 
-module.exports = {
-    config : require('./modules/config'),
-    transmitted : require('./modules/transmitted')
+module.exports = function(Manager) {
+    return {
+        config : require('./modules/config')(Manager),
+        //transmitted : require('./modules/transmitted')(Manager)
+    };
 };
