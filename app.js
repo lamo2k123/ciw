@@ -45,6 +45,8 @@ async.series([
 		Manager.events.emit('updater:checkFileConfig');
 
 	},
+async.series([
+    Updater.checkUpdate.bind(Updater, rli),
     Checker.config.checkFile.bind(Checker.config, rli),
     Checker.config.checkParams.bind(Checker.config, rli),
     Checker.transmitted.checkParams.bind(Checker.transmitted, rli),
@@ -55,7 +57,7 @@ async.series([
     }
 ], function() {
 
-    var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = jiraProjectName = null,
+    var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = jiraProjectName = jiraProjectKey = null,
         issuesVersion = [],
         flag    = step2 = installFlag = stopNode = false,
         jira    = new JiraApi(config.service.jira.protocol, config.service.jira.host, config.service.jira.port, config.service.jira.user, config.service.jira.password, config.service.jira.api);
@@ -116,6 +118,7 @@ async.series([
 
                     jiraNameVersion = config.projects[project].jira['version-name'].replace('{version}', version);
 					jiraProjectName = projectJira.name;
+					jiraProjectKey 	= projectJira.key;
 
                     var versionJira = _.findWhere(projectJira.versions, {
                         name : jiraNameVersion
@@ -432,7 +435,8 @@ async.series([
                     }
                 },
                 onEnd: function(sessionText, sshObj) {
-					Manager.events.emit('notification:hip-chat:buildComplete', jiraNameVersion, jiraProjectName);
+					// Arguments: jiraVersionId, jiraProjectKey, jiraVersionName, jiraProjectName
+					Manager.events.emit('notification:hip-chat:buildComplete', versionId, jiraProjectKey, jiraNameVersion, jiraProjectName);
 
                     fs.writeFile([__dirname, folder + '.log'].join('/'), sessionText, function(error) {
                         if(error) {
