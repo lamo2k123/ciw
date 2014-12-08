@@ -15,32 +15,32 @@ var fs          = require('fs'),
 
     // Custom
 	Manager		= require('./modules/manager'),
+    Store       = require('./modules/store')(Manager)
+    Updater     = require('./modules/updater')(Manager),
+    Transmitted = require('./modules/transmitted')(Manager),
+
 	Notification= require('./modules/notification')(Manager),
-	Updater     = require('./modules/updater')(Manager),
     Checker     = require('./modules/checker')(Manager),
 
 	//Jira        = require('./modules/jira')(Manager),
-    Statement   = require('./modules/statement');
+
 
     // Variables
     config      = null;
 
 // https://api.github.com/repos/lamo2k123/ci-wezzet/tags
 
-Statement.args = process.argv.slice(2);
+Manager.events.emit('store:set', 'args', process.argv.slice(2));
 
 var rli = readline.createInterface({
     input   : process.stdin,
     output  : process.stdout
 });
 
-// Module updater
-Manager.events.emit('updater:set', {
-    rli     : rli,
-    manager : Manager
-});
+// Module UPDATER
+Manager.events.emit('updater:set', {rli : rli});
 
-Manager.events.once('updater:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkFileConfig'));
+Manager.events.once('updater:complete', Manager.events.emit.bind(Manager.events, 'transmitted:checkParams'));
 Manager.events.once('updater:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkModuleConfig'));
 Manager.events.once('updater:checkModuleConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkFileVersion'));
 Manager.events.once('updater:checkFileVersion:complete', Manager.events.emit.bind(Manager.events, 'updater:checkUpdate'));
@@ -49,13 +49,21 @@ Manager.events.once('updater:downloadUpdate:complete', Manager.events.emit.bind(
 
 Manager.events.emit('updater:checkFileConfig');
 
-return;
+// Module TRANSMITTED
+Manager.events.emit('transmitted:set', {rli : rli});
 
+Manager.events.once('transmitted:complete', function() {
+    console.log(22222222);
+});
+
+
+return;
+// Module CHECKER
 Manager.events.emit('checker:config:set', {rli : rli});
 
-
-
-//Manager.events.once('checker:config:complete', callback);
+Manager.events.once('checker:config:complete', function() {
+    console.log(22222222222222222);
+});
 Manager.events.once('checker:config:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkConfigParams'));
 
 
