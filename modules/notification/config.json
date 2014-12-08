@@ -5,7 +5,14 @@
   	"color" : "green",
   	"format" : "html",
 	"notify" : true,
+	"separator" : "<br>",
   	"messages" : {
-    	"buildComplete" : "Сборка и установка версии <strong>{version}</strong> по проекту <strong>{project}</strong> завершена!<br>Перейти в <a href='{version-link}'>{version}</a><br>Перейти в <a href='{project-link}'>{project}</a>"
-  	}
+    	"buildComplete" : "Сборка и установка версии <strong>{version-name}</strong> по проекту <strong>{project-name}</strong> завершена!",
+		"versionLink" : "Перейти в <a href='{version-link}'>{version-name}</a>",
+		"projectLink" : "Перейти в <a href='{project-link}'>{project-name}</a>"
+  	},
+	"links" : {
+		"project" : "http://my.wezzet.com/jira/browse/{project-key}/",
+		"version" : "http://my.wezzet.com/jira/browse/{project-key}/fixforversion/{version-id}/"
+	}
 }
