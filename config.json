@@ -1,57 +1,62 @@
 {
-  "dir" : "/tmp",
-
-  "branch" : {
-    "dev" : "develop",
-    "release" : "release"
-  },
-  "timeout" : 30000,
-  "service" : {
-    "repo" : {
-      "password" : "*********"
+    "dir": "/tmp",
+    "branch": {
+        "dev": "develop",
+        "release": "release"
     },
-    "vm" : {
-      "user" : "tester",
-      "password" : "********",
-      "host" : "vm-host",
-      "port" : 1022
+    "timeout": 30000,
+    "service": {
+        "repo": {
+            "password": "*********"
+        },
+        "vm": {
+            "user": "tester",
+            "password": "********",
+            "host": "vm-host",
+            "port": 1022
+        },
+        "public": {
+            "user": "tester",
+            "password": "********",
+            "host": "public.google.net",
+            "port": 1022
+        },
+        "jira": {
+            "protocol": "http",
+            "host": "jira.com",
+            "port": 80,
+            "user": "tester",
+            "password": "*******",
+            "api": "2"
+        }
     },
-    "public" : {
-      "user" : "tester",
-      "password" : "********",
-      "host" : "public.google.net",
-      "port" : 1022
+    "projects": {
+        "dynbls": {
+            "git-repo": "ssh://git@127.0.0.1/node.git",
+            "jira": {
+                "project-name": "TEST",
+                "version-name": "TEST-{version}"
+            },
+            "rpm": {
+                "project-name": "Test"
+            }
+        },
+        "tls": {
+            "git-repo": "ssh://git@127.0.0.1/node.git",
+            "jira": {
+                "project-name": "TEST2",
+                "version-name": "TESTER-{version}"
+            },
+            "rpm": {
+                "project-name": "Too"
+            }
+        }
     },
-    "jira" : {
-      "protocol" : "http",
-      "host" : "jira.com",
-      "port" : 80,
-      "user" : "tester",
-      "password" : "*******",
-      "api" : "2"
+    "modules": {
+        "updater": {
+            "git-repo": "https://api.github.com/repos/lamo2k123/ciw/tags",
+            "update-folder": "update",
+            "update-file-name": "update-{sha}"
+        }
     }
-  },
-
-  "projects" : {
-    "dynbls" : {
-      "git-repo" : "ssh://git@127.0.0.1/node.git",
-      "jira" : {
-        "project-name" : "TEST",
-        "version-name" : "TEST-{version}"
-      },
-      "rpm" : {
-        "project-name" : "Test"
-      }
-    },
-    "tls" : {
-      "git-repo" : "ssh://git@127.0.0.1/node.git",
-      "jira" : {
-        "project-name" : "TEST2",
-        "version-name" : "TESTER-{version}"
-      },
-      "rpm" : {
-        "project-name" : "Too"
-      }
-    }
-  }
 }

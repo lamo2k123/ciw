@@ -34,20 +34,31 @@ var rli = readline.createInterface({
     output  : process.stdout
 });
 
-
-Manager.events.emit('updater:set:rli', rli);
-Manager.events.emit('checker:config:set', {rli : rli});
+// Module updater
+Manager.events.emit('updater:set', {
+    rli     : rli,
+    manager : Manager
+});
 
 Manager.events.once('updater:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkFileConfig'));
-Manager.events.once('updater:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkFileVersion'));
+Manager.events.once('updater:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkModuleConfig'));
+Manager.events.once('updater:checkModuleConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkFileVersion'));
 Manager.events.once('updater:checkFileVersion:complete', Manager.events.emit.bind(Manager.events, 'updater:checkUpdate'));
 Manager.events.once('updater:checkUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:downloadUpdate'));
 Manager.events.once('updater:downloadUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:installUpdate'));
 
+Manager.events.emit('updater:checkFileConfig');
+
+return;
+
+Manager.events.emit('checker:config:set', {rli : rli});
+
+
+
 //Manager.events.once('checker:config:complete', callback);
 Manager.events.once('checker:config:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkConfigParams'));
 
-Manager.events.emit('updater:checkFileConfig');
+
 
 
 return;
@@ -58,11 +69,10 @@ async.series([
         Manager.events.once('checker:config:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkConfigParams'));
 
         Manager.events.emit('checker:config:checkFileConfig');
-    },
+
     //Checker.config.checkFile.bind(Checker.config, rli),
     //Checker.config.checkParams.bind(Checker.config, rli),
 	},
-async.series([
     Updater.checkUpdate.bind(Updater, rli),
     Checker.config.checkFile.bind(Checker.config, rli),
     Checker.config.checkParams.bind(Checker.config, rli),

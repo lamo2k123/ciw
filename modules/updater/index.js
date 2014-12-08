@@ -3,12 +3,13 @@ var fs      = require('fs-extra'),
 	path	= require('path'),
     https   = require('https'),
     unzip   = require('unzip'),
+	async	= require('async'),
 	request = require('request'),
-    colors  = require('colors'),
 
 	// Var
 	dirname			= path.dirname(__filename),
-	configFile 		= path.join(dirname, 'config.json'),
+	rootname		= path.join(dirname, '..', '..'),
+	configFile 		= path.join(rootname, 'config.json'),
 	versionFile		= path.join(dirname, 'version');
 
 var Updater = function() {
@@ -16,17 +17,31 @@ var Updater = function() {
 		return new Updater();
 	}
 
-	this.manager.events.on('updater:set:rli', function(rli){
-		this.rli = rli;
-	}.bind(this));
-
+	this.manager.events.on('updater:set', this.set.bind(this));
 	this.manager.events.on('updater:checkFileConfig', this.checkFileConfig.bind(this));
+	this.manager.events.on('updater:checkModuleConfig', this.checkModuleConfig.bind(this));
 	this.manager.events.on('updater:checkFileVersion', this.checkFileVersion.bind(this));
 	this.manager.events.on('updater:checkUpdate', this.checkUpdate.bind(this));
 	this.manager.events.on('updater:downloadUpdate', this.downloadUpdate.bind(this));
 	this.manager.events.on('updater:installUpdate', this.installUpdate.bind(this));
 
 	return this;
+};
+
+Updater.prototype.set = function(options) {
+	if(options) {
+		this.options = options;
+	}
+
+	return this;
+};
+
+Updater.prototype.get = function(param) {
+	if(param && typeof param === 'string' && this.options && this.options[param]) {
+		return this.options[param];
+	}
+
+	return null;
 };
 
 Updater.prototype.checkFileConfig = function() {
@@ -36,9 +51,66 @@ Updater.prototype.checkFileConfig = function() {
 
 		this.manager.events.emit('updater:checkFileConfig:complete');
 	} else {
-		console.log(colors.error('[UPDATER] Файл конфигураций не найден!'));
+		console.error('[UPDATER] Файл конфигураций не найден!');
 		this.manager.events.emit('updater:complete');
 	}
+};
+
+Updater.prototype.checkModuleConfig = function() {
+	if(this.config) {
+		if(!this.config.modules) {
+			this.config.modules = {};
+		}
+
+		if(!this.config.modules.updater) {
+			this.config.modules.updater = {};
+		}
+
+		async.series([
+			function(callback) {
+				if(!this.config.modules.updater['git-repo']) {
+					this.get('rli').question('[UPDATER] Укажите репозиторий обновлений (Default: "https://api.github.com/repos/lamo2k123/ciw/tags"): ', function(answer) {
+						this.config.modules.updater['git-repo'] = answer || 'https://api.github.com/repos/lamo2k123/ciw/tags';
+
+						callback(null);
+					}.bind(this));
+				} else {
+					callback(null);
+				}
+			}.bind(this),
+			function(callback) {
+				if(!this.config.modules.updater['update-folder']) {
+					this.get('rli').question('[UPDATER] Укажите директорию для обновлений (Default: "update"): ', function(answer) {
+						this.config.modules.updater['update-folder'] = answer || 'update';
+						callback(null);
+					}.bind(this));
+				} else {
+					callback(null);
+				}
+			}.bind(this),
+			function(callback) {
+				if(!this.config.modules.updater['update-file-name']) {
+					this.get('rli').question('[UPDATER] Укажите шаблон директории обновлений (Default: "update-{sha}"): ', function(answer) {
+						this.config.modules.updater['update-file-name'] = answer || 'update-{sha}';
+						callback(null);
+					}.bind(this));
+				} else {
+					callback(null);
+				}
+			}.bind(this)
+		], function(error) {
+			if(error !== null) {
+				// @TODO: Вывод ошибки и запись в лог.
+			}
+
+			fs.writeFileSync(configFile, JSON.stringify(this.config, null, 4));
+
+			this.manager.events.emit('updater:checkModuleConfig:complete');
+		}.bind(this));
+
+	}
+
+	return this;
 };
 
 Updater.prototype.checkFileVersion = function() {
@@ -51,33 +123,30 @@ Updater.prototype.checkFileVersion = function() {
 		this.currentVersion = 'v0.0.0'
 		this.currentHash = '000000000000000000000';
 		fs.writeFileSync(versionFile, [this.currentVersion, this.currentHash].join(':'));
-		console.log(colors.info('[UPDATER] Создан файл контроля версий!'));
+		console.info('[UPDATER] Создан файл контроля версий!');
 	}
 
 	this.manager.events.emit('updater:checkFileVersion:complete');
 };
 
 Updater.prototype.checkUpdate = function() {
-	console.log(colors.info('[UPDATER] Проверка на наличие обновлений...'));
+	console.info('[UPDATER] Проверка на наличие обновлений...');
 
-	if(!this.config['git-repo']) {
-		// @TODO: Добавить предложение ввести адрес репозитория.
-		// Если от предложения ввести репозиторий отказались предложить еще через неделю.
-		console.log(colors.warn('[UPDATER] Не указан репозиторий обновлений, проверка обновлений невозможна!'));
-
-		this.manager.events.emit('updater:complete');
+	if(!this.config.modules.updater['git-repo']) {
+		console.warn('[UPDATER] Не указан репозиторий обновлений, проверка обновлений невозможна!');
+		this.manager.events.emit('updater:checkModuleConfig');
 	}
 
 	var request = https.request({
-		host : url.parse(this.config['git-repo']).host,
-		path : url.parse(this.config['git-repo']).path,
+		host : url.parse(this.config.modules.updater['git-repo']).host,
+		path : url.parse(this.config.modules.updater['git-repo']).path,
 		headers: {
 			'user-agent': 'ciw'
 		}
 	}, function(res) {
 		if(res.statusCode !== 200 || !this.currentVersion) {
 			// @TODO: Записать код ответа в лог.
-			console.log(colors.warn('[UPDATER] Не Удалось получить информацию по обновлениям!'));
+			console.warn('[UPDATER] Не Удалось получить информацию по обновлениям!');
 			this.manager.events.emit('updater:complete');
 		} else {
 
@@ -93,10 +162,10 @@ Updater.prototype.checkUpdate = function() {
 				data = JSON.parse(data);
 
 				if(this.currentVersion !== data[0].name || this.currentHash !== data[0].commit.sha) {
-					console.log(colors.help('[UPDATER] Доступна новая версия!'));
-					console.log(colors.help('[UPDATER] Версия: ' + data[0].name));
-					console.log(colors.help('[UPDATER] Скачать [ZIP]: ' + data[0]['zipball_url']));
-					console.log(colors.help('[UPDATER] Скачать [TAR]: ' + data[0]['tarball_url']));
+					console.info('[UPDATER] Доступна новая версия!');
+					console.info('[UPDATER] Версия: ' + data[0].name);
+					console.info('[UPDATER] Скачать [ZIP]: ' + data[0]['zipball_url']);
+					console.info('[UPDATER] Скачать [TAR]: ' + data[0]['tarball_url']);
 
 					this.version = data[0].name;
 					this.hash = data[0].commit.sha;
@@ -105,7 +174,7 @@ Updater.prototype.checkUpdate = function() {
 						tar : data[0]['tarball_url']
 					};
 
-					this.rli.question('Хотите обновить CIW? [y/N]: ', function(answer) {
+					this.get('rli').question('Хотите обновить CIW? [y/N]: ', function(answer) {
 						if(answer.match(/^y(es)?$/i)) {
 							this.manager.events.emit('updater:downloadUpdate');
 						} else {
@@ -123,7 +192,7 @@ Updater.prototype.checkUpdate = function() {
 
 	request.on('error', function(error) {
 		// @TODO: Записать ошибку в лог.
-		console.log(colors.warn('[UPDATER] Не Удалось получить информацию по обновлениям!'));
+		console.warn('[UPDATER] Не Удалось получить информацию по обновлениям!');
 
 		this.manager.events.emit('updater:complete');
 	}.bind(this));
@@ -132,9 +201,9 @@ Updater.prototype.checkUpdate = function() {
 };
 
 Updater.prototype.downloadUpdate = function() {
-	console.log(colors.info('[UPDATER] Подождите идет загрузка обновлений...'));
+	console.info('[UPDATER] Подождите идет загрузка обновлений...');
 
-	this.updateFile = path.join(this.config['update-folder'], this.config['update-file-name'].replace('{sha}', this.hash.substring(0, 7)));
+	this.updateFile = path.join(this.config.modules.updater['update-folder'], this.config.modules.updater['update-file-name'].replace('{sha}', this.hash.substring(0, 7)));
 
 	request({
 		url : this.archive.zip,
@@ -144,10 +213,10 @@ Updater.prototype.downloadUpdate = function() {
 	}, function(error) {
 		if(error) {
 			// @TODO: Записать ошибку в лог.
-			console.log(colors.error('[UPDATER] Произошла ошибка при загрузке обновлений!'));
+			console.error('[UPDATER] Произошла ошибка при загрузке обновлений!');
 			this.manager.events.emit('updater:complete');
 		}
-		console.log(colors.info('[UPDATER] Загрузка обновлений закончена!'));
+		console.info('[UPDATER] Загрузка обновлений закончена!');
 
 		this.manager.events.emit('updater:downloadUpdate:complete');
 
@@ -156,21 +225,20 @@ Updater.prototype.downloadUpdate = function() {
 };
 
 Updater.prototype.installUpdate = function() {
-	console.log(colors.info('[UPDATER] Установка обновлений...'));
+	console.info('[UPDATER] Установка обновлений...');
 
-	fs.createReadStream(this.updateFile).pipe(unzip.Extract({path : this.config['update-folder']}));
-	console.log([this.version, this.hash].join(':'));
+	fs.createReadStream(this.updateFile).pipe(unzip.Extract({path : this.config.modules.updater['update-folder']}));
 
-	fs.copy(path.join(this.config['update-folder'], ['lamo2k123-ciw', this.hash.substring(0, 7)].join('-')), path.join(__dirname, '..', '..'), function(error) {
+	fs.copy(path.join(this.config.modules.updater['update-folder'], ['lamo2k123-ciw', this.hash.substring(0, 7)].join('-')), path.join(__dirname, '..', '..'), function(error) {
 		if(error) {
 			// @TODO: Записать ошибку в лог.
-			console.log(colors.error('[UPDATER] Произошла ошибка при установке обновлений!'));
+			console.error('[UPDATER] Произошла ошибка при установке обновлений!');
 			this.manager.events.emit('updater:complete');
 		} else {
 			fs.writeFileSync(versionFile, [this.version, this.hash].join(':'));
-			console.log(colors.info('[UPDATER] Файл контроля версий обновлён!'));
-			console.log(colors.info('[UPDATER] Установка обновлений закончена!'));
-			console.log(colors.help('[UPDATER] Запустите приложение!'));
+			console.info('[UPDATER] Файл контроля версий обновлён!');
+			console.info('[UPDATER] Установка обновлений закончена!');
+			console.info('[UPDATER] Запустите приложение!');
 			process.exit(0);
 		}
 	}.bind(this));
