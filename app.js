@@ -52,9 +52,7 @@ Manager.events.emit('updater:checkFileConfig');
 // Module TRANSMITTED
 Manager.events.emit('transmitted:set', {rli : rli});
 
-Manager.events.once('transmitted:complete', function() {
-    console.log(22222222);
-});
+Manager.events.once('transmitted:complete', Manager.events.emit.bind(Manager.events, 'transmitted:checkParams'));
 
 
 return;
