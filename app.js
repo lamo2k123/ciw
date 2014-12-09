@@ -15,7 +15,6 @@ var fs          = require('fs'),
 
     // Custom
 	Manager		= require('./modules/manager'),
-    Store       = require('./modules/store')(Manager)
     Updater     = require('./modules/updater')(Manager),
     Transmitted = require('./modules/transmitted')(Manager),
 
@@ -30,24 +29,26 @@ var fs          = require('fs'),
 
 // https://api.github.com/repos/lamo2k123/ci-wezzet/tags
 
-Manager.events.emit('store:set', 'args', process.argv.slice(2));
-
-var rli = readline.createInterface({
-    input   : process.stdin,
-    output  : process.stdout
+Manager.store.set({
+    argv    : process.argv.slice(2),
+    rli     : readline.createInterface({
+        input   : process.stdin,
+        output  : process.stdout
+    })
 });
 
-// Module UPDATER
-Manager.events.emit('updater:set', {rli : rli});
+async.series([
+    Updater.run.bind(Updater)
+], function(error) {
+    if(error) {
+        // @TODO
+    }
 
-Manager.events.once('updater:complete', Manager.events.emit.bind(Manager.events, 'transmitted:checkParams'));
-Manager.events.once('updater:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkModuleConfig'));
-Manager.events.once('updater:checkModuleConfig:complete', Manager.events.emit.bind(Manager.events, 'updater:checkFileVersion'));
-Manager.events.once('updater:checkFileVersion:complete', Manager.events.emit.bind(Manager.events, 'updater:checkUpdate'));
-Manager.events.once('updater:checkUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:downloadUpdate'));
-Manager.events.once('updater:downloadUpdate:complete', Manager.events.emit.bind(Manager.events, 'updater:installUpdate'));
+    process.exit(0);
+});
 
-Manager.events.emit('updater:checkFileConfig');
+return;
+
 
 // Module TRANSMITTED
 Manager.events.emit('transmitted:set', {rli : rli});
