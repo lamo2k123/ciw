@@ -1,66 +1,24 @@
-var fs      = require('fs-extra'),
-	url 	= require('url'),
-	path	= require('path'),
-    https   = require('https'),
-    unzip   = require('unzip'),
-	async	= require('async'),
-	request = require('request'),
-
-	// Var
-	dirname			= path.dirname(__filename),
-	rootname		= path.join(dirname, '..', '..'),
-	configFile 		= path.join(rootname, 'config.json'),
-	versionFile		= path.join(dirname, 'version');
+var async = require('async');
 
 var Transmitted = function() {
 	if(!(this instanceof Transmitted)) {
 		return new Transmitted();
 	}
 
-	this.manager.events.on('transmitted:get:args', function(params) {
-		this.options.args = params;
-	}.bind(this));
-
-	this.manager.events.on('transmitted:get:project', function(params) {
-		this.options.project = params;
-	}.bind(this));
-
-	this.manager.events.on('transmitted:get:version', function(params) {
-		this.options.version = params;
-	}.bind(this));
-
-	this.manager.events.on('transmitted:set', this.set.bind(this));
-
-	this.manager.events.on('transmitted:checkParams', this.checkParams.bind(this));
-
 	return this;
 };
 
-Transmitted.prototype.set = function(options) {
-	if(options) {
-		this.options = options;
-	}
-
-	return this;
+Transmitted.prototype.run = function(callback) {
+	async.series([
+		this._checkParams.bind(this)
+	], callback);
 };
 
-Transmitted.prototype.get = function(param) {
-	if(param && typeof param === 'string' && this.options && this.options[param]) {
-		return this.options[param];
-	}
-
-	return null;
-};
-
-Transmitted.prototype.checkParams = function() {
+Transmitted.prototype._checkParams = function(callback) {
 
 	async.series([
 		function(callback) {
-			console.info('[TRANSMITTED] Проверка параметров запуска.');
-
-			this.manager.events.emit('store:get', 'args', 'transmitted:get:args');
-
-			if(!this.get('args').length) {
+			if(!this.manager.store.get('argv').length) {
 				console.warn('[TRANSMITTED] Параметры запуска не указаны!');
 				console.info('[TRANSMITTED] Пример запуска: node <dir>/app.js <project> <version>');
 
@@ -79,30 +37,24 @@ Transmitted.prototype.checkParams = function() {
 			}
 		}.bind(this),
 		function(callback) {
-			if(!this.get('args')[0] && !this.get('project')) {
+			if(!this.manager.store.get('argv')[0] && !this.manager.store.get('transmittedProject')) {
 				console.log('[TRANSMITTED] В параметрах запуска не указан проект!');
 				this.insertProject(callback);
 			} else {
-				this.manager.events.emit('store:get', 'project', 'transmitted:get:project');
-
-				if(!this.get('project')) {
-					this.manager.events.emit('store:set', 'project', this.get('args')[0].toLowerCase());
-					this.manager.events.emit('store:get', 'project', 'transmitted:get:project');
+				if(!this.manager.store.get('transmittedProject')) {
+					this.manager.store.set('transmittedProject', this.manager.store.get('argv')[0].toLowerCase());
 				}
 
 				callback(null);
 			}
 		}.bind(this),
 		function(callback) {
-			if(!this.get('args')[1] && !this.get('version')) {
+			if(!this.manager.store.get('argv')[1] && !this.manager.store.get('transmittedVersion')) {
 				console.log('[TRANSMITTED] В параметрах запуска не указана версия сборки!');
 				this.insertVersion(callback);
 			} else {
-				this.manager.events.emit('store:get', 'version', 'transmitted:get:version');
-
-				if(!this.get('version')) {
-					this.manager.events.emit('store:set', 'version', this.get('args')[1]);
-					this.manager.events.emit('store:get', 'version', 'transmitted:get:version');
+				if(!this.manager.store.get('transmittedVersion')) {
+					this.manager.store.set('transmittedVersion', this.manager.store.get('argv')[1]);
 				}
 
 				callback(null);
@@ -113,17 +65,15 @@ Transmitted.prototype.checkParams = function() {
 			// @TODO: Вывести ошибку и записать в лог.
 		}
 
-		this.manager.events.emit('store:set', 'folder', ['CI', this.get('project').toUpperCase(), this.get('version')].join('-'));
-		this.manager.events.emit('transmitted:complete');
+		callback(null);
 	}.bind(this));
 
 };
 
 Transmitted.prototype.insertProject = function(callback) {
-	this.get('rli').question('[TRANSMITTED] Введите аббревиатуру проекта: ', function(answer) {
+	this.manager.store.get('rli').question('[TRANSMITTED] Введите аббревиатуру проекта: ', function(answer) {
 		if(answer) {
-			this.manager.events.emit('store:set', 'project', answer.toLowerCase());
-			this.manager.events.emit('store:get', 'project', 'transmitted:get:project');
+			this.manager.store.set('transmittedProject', answer.toLowerCase());
 		} else {
 			process.exit(0);
 		}
@@ -133,10 +83,9 @@ Transmitted.prototype.insertProject = function(callback) {
 };
 
 Transmitted.prototype.insertVersion = function(callback) {
-	this.get('rli').question('[TRANSMITTED] Введите версию сборки: ', function(answer) {
+	this.manager.store.get('rli').question('[TRANSMITTED] Введите версию сборки: ', function(answer) {
 		if(answer) {
-			this.manager.events.emit('store:set', 'version', answer);
-			this.manager.events.emit('store:get', 'version', 'transmitted:get:version');
+			this.manager.store.set('transmittedVersion', answer);
 		} else {
 			process.exit(0);
 		}

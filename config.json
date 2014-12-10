@@ -20,14 +20,6 @@
             "password": "********",
             "host": "public.google.net",
             "port": 1022
-        },
-        "jira": {
-            "protocol": "http",
-            "host": "jira.com",
-            "port": 80,
-            "user": "tester",
-            "password": "*******",
-            "api": "2"
         }
     },
     "projects": {
@@ -53,15 +45,18 @@
         }
     },
     "modules": {
-        "updater__": {
-            "git-repo": "https://api.github.com/repos/lamo2k123/ciw/tags",
-            "update-folder": "update",
-            "update-file-name": "update-{sha}"
-        },
         "updater": {
             "git-repo": "https://api.github.com/repos/lamo2k123/ciw/tags",
             "update-folder": "update",
             "update-file-name": "update-{sha}"
+        },
+        "jira": {
+            "protocol": "http",
+            "host": "jira.com",
+            "port": 80,
+            "user": "tester",
+            "password": "*******",
+            "api": "2"
         }
     }
 }

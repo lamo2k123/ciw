@@ -4,25 +4,12 @@ var fs      = require('fs-extra'),
     https   = require('https'),
     unzip   = require('unzip'),
 	async	= require('async'),
-	request = require('request'),
-
-	// Var
-	dirname			= path.dirname(__filename),
-	rootname		= path.join(dirname, '..', '..'),
-	versionFile		= path.join(dirname, 'version');
+	request = require('request');
 
 var Updater = function() {
 	if(!(this instanceof Updater)) {
 		return new Updater();
 	}
-
-/*	this.manager.events.on('updater:set', this.set.bind(this));
-	this.manager.events.on('updater:checkFileConfig', this.checkFileConfig.bind(this));
-	this.manager.events.on('updater:checkModuleConfig', this.checkModuleConfig.bind(this));
-	this.manager.events.on('updater:checkFileVersion', this.checkFileVersion.bind(this));
-	this.manager.events.on('updater:checkUpdate', this.checkUpdate.bind(this));
-	this.manager.events.on('updater:downloadUpdate', this.downloadUpdate.bind(this));
-	this.manager.events.on('updater:installUpdate', this.installUpdate.bind(this));*/
 
 	return this;
 };
@@ -36,9 +23,6 @@ Updater.prototype.run = function(callback) {
 
 
 Updater.prototype._checkModuleConfig = function(callback) {
-	!this.manager.config.get('modules') && this.manager.config.set('modules', {});
-	!this.manager.config.get('modules.updater') && this.manager.config.set('modules.updater', {});
-
 	async.series([
 		function(callback) {
 			if(!this.manager.config.get('modules.updater.git-repo')) {

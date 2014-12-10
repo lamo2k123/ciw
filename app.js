@@ -17,11 +17,9 @@ var fs          = require('fs'),
 	Manager		= require('./modules/manager'),
     Updater     = require('./modules/updater')(Manager),
     Transmitted = require('./modules/transmitted')(Manager),
-
-	Notification= require('./modules/notification')(Manager),
     Checker     = require('./modules/checker')(Manager),
-
-	//Jira        = require('./modules/jira')(Manager),
+    Jira        = require('./modules/jira')(Manager),
+	Notification= require('./modules/notification')(Manager),
 
 
     // Variables
@@ -38,7 +36,10 @@ Manager.store.set({
 });
 
 async.series([
-    Updater.run.bind(Updater)
+    Updater.run.bind(Updater),
+    Transmitted.run.bind(Transmitted),
+    Checker.run.bind(Checker),
+    Jira.run.bind(Jira)
 ], function(error) {
     if(error) {
         // @TODO
@@ -49,46 +50,7 @@ async.series([
 
 return;
 
-
-// Module TRANSMITTED
-Manager.events.emit('transmitted:set', {rli : rli});
-
-Manager.events.once('transmitted:complete', Manager.events.emit.bind(Manager.events, 'transmitted:checkParams'));
-
-
-return;
-// Module CHECKER
-Manager.events.emit('checker:config:set', {rli : rli});
-
-Manager.events.once('checker:config:complete', function() {
-    console.log(22222222222222222);
-});
-Manager.events.once('checker:config:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkConfigParams'));
-
-
-
-
-return;
-
 async.series([
-    function(callback) {
-        Manager.events.once('checker:config:complete', callback);
-        Manager.events.once('checker:config:checkFileConfig:complete', Manager.events.emit.bind(Manager.events, 'checker:config:checkConfigParams'));
-
-        Manager.events.emit('checker:config:checkFileConfig');
-
-    //Checker.config.checkFile.bind(Checker.config, rli),
-    //Checker.config.checkParams.bind(Checker.config, rli),
-	},
-    Updater.checkUpdate.bind(Updater, rli),
-    Checker.config.checkFile.bind(Checker.config, rli),
-    Checker.config.checkParams.bind(Checker.config, rli),
-    Checker.transmitted.checkParams.bind(Checker.transmitted, rli),
-    function(callback) {
-        config = Statement.getConfig();
-
-        callback(null);
-    }
 ], function() {
 
     var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = jiraProjectName = jiraProjectKey = null,
@@ -101,108 +63,6 @@ async.series([
     folder = Statement.folder;
 
     async.series([
-        function(callback) {
-            var status = true;
-
-            log.info('Проверка конфигурации.');
-
-            if(!config || _.isEmpty(config)) {
-                log.error('Конфигурация отсуцтвует!');
-                status = false;
-            } else {
-                if(!config.projects || _.isEmpty(config.projects)) {
-                    log.error('Конфигурации проектов отсуцтвуют!');
-                    status = false;
-                } else {
-
-                }
-            }
-
-            if(status) {
-                callback(null, config);
-            } else {
-                log.error('Пример конфигурации проекта:');
-                console.log(util.inspect({
-                    "dynbls" : {
-                        "git-repo" : "ssh://git@81.161.98.19:7999/dynbls/node.git",
-                        "jira" : {
-                            "project-name" : "DYNB",
-                            "version-name" : "LSNODE-{version}"
-                        },
-                        "rpm" : {
-                            "project-name" : "DynbLs"
-                        }
-                    }
-                }, false, null));
-            }
-
-        },
-
-        function(callback){
-            var status = true;
-
-            log.info('Проверка проекта ' + config.projects[project].jira['project-name'] + ' в JIRA.');
-
-            jira.getProject(config.projects[project].jira['project-name'], function(error, projectJira) {
-                if(!projectJira || _.isEmpty(projectJira)) {
-                    log.error('Проект ' + config.projects[project].jira['project-name'] + ' не найден в JIRA!');
-                    status = false;
-                } else {
-                    log.info('Проверка версии ' + version + ' в ' + projectJira.name);
-
-                    jiraNameVersion = config.projects[project].jira['version-name'].replace('{version}', version);
-					jiraProjectName = projectJira.name;
-					jiraProjectKey 	= projectJira.key;
-
-                    var versionJira = _.findWhere(projectJira.versions, {
-                        name : jiraNameVersion
-                    });
-
-                    if(!versionJira || _.isEmpty(versionJira)) {
-                        log.error('Версия ' + jiraNameVersion + ' в проекте ' + projectJira.name + ' не найдена!');
-                        status = false;
-                    } else {
-                        versionId = versionJira.id
-                    }
-                }
-
-                if(status) {
-                    callback(null, projectJira);
-                }
-            });
-
-
-        },
-
-        function(callback){
-            var jiraVersionName = config.projects[project].jira['version-name'].replace('{version}', version);
-
-            log.info('Проверка на наличие не закрытых задач в ' + jiraVersionName);
-
-            jira.getUnresolvedIssueCount(versionId, function(error, count) {
-
-                if(count) {
-                    log.warn('В версии ' + jiraVersionName + ' имеются незакрытые задачи:', count);
-
-                    var rl = readline.createInterface({
-                        input: process.stdin,
-                        output: process.stdout
-                    });
-
-                    rl.question('Хотите продолжить? [y/N]', function(answer) {
-                        if(answer.match(/^y(es)?$/i)) {
-                            callback(null, count);
-                        } else {
-                            process.exit(0);
-                        }
-                    });
-                } else {
-                    callback(null, count);
-                }
-
-            });
-
-        },
 
         function(callback){
             var SSH = new SSH2Shell({
