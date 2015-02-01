@@ -35,15 +35,18 @@ Manager.store.set({
     })
 });
 
+
+
 async.series([
-    Updater.run.bind(Updater),
+    //Updater.run.bind(Updater),
     Transmitted.run.bind(Transmitted),
-    Checker.run.bind(Checker),
-    Jira.run.bind(Jira)
+    //Checker.run.bind(Checker),
+    //Jira.run.bind(Jira)
 ], function(error) {
-    if(error) {
-        // @TODO
-    }
+    if(error)
+        throw error;
+
+    console.log(Manager.config.get('dir'));
 
     process.exit(0);
 });
@@ -66,15 +69,10 @@ async.series([
 
         function(callback){
             var SSH = new SSH2Shell({
-                server : {
-                    host : config.service.vm.host,
-                    port : config.service.vm.port,
-                    userName : config.service.vm.user,
-                    password : config.service.vm.password
-                },
-                idleTimeOut: config.timeout,
+                server : Manager.config.get('service.vm'),
+                idleTimeOut: Manager.config.get('timeout'),
                 commands:      [
-                    ['cd', config.dir].join(' ')
+                    'cd ' + Manager.config.get('dir')
                 ],
                 msg : {
                     send : function(message) {
@@ -84,13 +82,13 @@ async.series([
 
                 onCommandComplete: function(command, response, sshObj) {
                     switch(command) {
-                        case ['cd', config.dir].join(' '):
+                        case 'cd ' + Manager.config.get('dir'):
                             if(response.indexOf('No such file or directory') !== -1) {
-                                log.error('Не удалось перейти в директорию:', config.dir, response);
+                                log.error('Не удалось перейти в директорию:', Manager.config.get('dir'), response);
                             } else {
-                                log.info('Произведен переход в директорию:', config.dir);
+                                log.info('Произведен переход в директорию:', Manager.config.get('dir'));
 
-                                sshObj.commands.push(['git', 'clone', config.projects[project]['git-repo'], folder].join(' '));
+                                sshObj.commands.push('git clone ' + Manager.config.get('project.' + project + '.git-repo') + ' ' + folder);
                             }
 
                             break;

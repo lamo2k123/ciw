@@ -10,13 +10,13 @@
             "password": "*********"
         },
         "vm": {
-            "user": "tester",
+            "userName": "tester",
             "password": "********",
             "host": "vm-host",
             "port": 1022
         },
         "public": {
-            "user": "tester",
+            "userName": "tester",
             "password": "********",
             "host": "public.google.net",
             "port": 1022
