@@ -63,7 +63,10 @@ Transmitted.prototype._checkParams = function(callback) {
 	], function(error, result) {
 		if(error) {
 			// @TODO: Вывести ошибку и записать в лог.
+			throw error;
 		}
+
+		this.manager.store.set('transmittedFolder', 'CI-' + this.manager.store.get('argv')[0].toUpperCase() + '-' + this.manager.store.get('argv')[1] + '-' + new Date().getTime());
 
 		callback(null);
 	}.bind(this));

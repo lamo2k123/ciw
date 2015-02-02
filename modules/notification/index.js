@@ -1,32 +1,23 @@
-var fs				= require('fs'),
-	path			= require('path'),
-	colors			= require('colors'),
-	HipChatClient 	= require('hipchat-client'),
-
-	// Var
-	dirname			= path.dirname(__filename),
-	configFile 		= path.join(dirname, 'config.json');
+var HipChatClient = require('hipchat-client');
 
 var Notification = function() {
 	if(!(this instanceof Notification)) {
 		return new Notification();
 	}
 
-	if(fs.existsSync(configFile)) {
-		var file = fs.readFileSync(configFile);
-		this.config = JSON.parse(file);
+	if(this.manager.config.get('modules.notification')) {
+		this.config = this.manager.config.get('modules.notification');
+		this.initHipChat();
 	} else {
-		console.log('Нету конфига у notification');
+		console.error('[NOTIFICATION] Конфигурации не найдены!');
 	}
-
-	this.initHipChat();
 
 	return this;
 };
 
 Notification.prototype.initHipChat = function() {
 
-	if(this.config && this.config.token && this.config.room) {
+	if(this.config.token && this.config.room) {
 		this.hipChat = new HipChatClient(this.config.token);
 
 		this.manager.events.on('notification:hip-chat:buildComplete', this.buildCompleteHipChat.bind(this));
@@ -67,9 +58,9 @@ Notification.prototype.buildCompleteHipChat = function(jiraVersionId, jiraProjec
 
 		// @TODO: Может пройти без jiraProjectName и jiraVersionName которые используются.
 		if(this.config.messages.projectLink) {
-			if(this.config.links) {
+			if(this.config.messages.links) {
 				if(jiraProjectKey) {
-					if(this.config.links.project) {
+					if(this.config.messages.links.project) {
 						var messageProjectLink 	= this.config.messages.projectLink,
 							linkProject 		= this.config.links.project;
 
@@ -133,15 +124,15 @@ Notification.prototype.buildCompleteHipChat = function(jiraVersionId, jiraProjec
 		notify			: this.config.notify || false
 	}, function(error, response) {
 		if(error) {
-			console.log(colors.error('При отправке оповещения в Hip-Chat произошла ошибка!'));
+			console.error('[NOTIFICATION] При отправке оповещения в Hip-Chat произошла ошибка!');
+			throw error;
 			// @TODO: Добавить запись ошибки в лог.
-//			throw error;
 		}
 
 		if(response.status === 'sent') {
-			console.log(colors.help('Отправлено оповещение в Hip-Chat!'));
+			console.info('[NOTIFICATION] Отправлено оповещение в Hip-Chat!');
 		} else {
-			console.log(colors.warn('Не удалось отправить оповещение в Hip-Chat!'));
+			console.warn('[NOTIFICATION] Не удалось отправить оповещение в Hip-Chat!');
 		}
 	});
 

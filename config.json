@@ -1,46 +1,46 @@
 {
     "dir": "/tmp",
     "branch": {
-        "dev": "develop",
-        "release": "release"
+        "dev": "test-develop",
+        "release": "test-release"
     },
     "timeout": 30000,
     "service": {
         "repo": {
-            "password": "*********"
+            "password": "BBeriqpr2k123"
         },
         "vm": {
-            "userName": "tester",
-            "password": "********",
-            "host": "vm-host",
+            "userName": "anovikov",
+            "password": "Aa123456",
+            "host": "vm-dev29",
             "port": 1022
         },
         "public": {
-            "userName": "tester",
-            "password": "********",
-            "host": "public.google.net",
-            "port": 1022
+            "userName": "anovikov",
+            "password" : "Aa123456",
+            "host" : "club01-public.wplatform.net",
+            "port" : 1022
         }
     },
     "projects": {
-        "dynbls": {
-            "git-repo": "ssh://git@127.0.0.1/node.git",
-            "jira": {
-                "project-name": "TEST",
-                "version-name": "TEST-{version}"
+        "dynbls" : {
+            "git-repo" : "ssh://git@stash.wezzet.com:7999/dynbls/node.git",
+            "jira" : {
+                "project-name" : "DYNB",
+                "version-name" : "LSNODE-{version}"
             },
-            "rpm": {
-                "project-name": "Test"
+            "rpm" : {
+                "project-name" : "DynbLs"
             }
         },
-        "tls": {
-            "git-repo": "ssh://git@127.0.0.1/node.git",
-            "jira": {
-                "project-name": "TEST2",
-                "version-name": "TESTER-{version}"
+        "tls" : {
+            "git-repo" : "ssh://git@stash.wezzet.com:7999/dynbls/tls.git",
+            "jira" : {
+                "project-name" : "TLS",
+                "version-name" : "Lobby-{version}"
             },
-            "rpm": {
-                "project-name": "Too"
+            "rpm" : {
+                "project-name" : "Tls"
             }
         }
     },
@@ -51,12 +51,30 @@
             "update-file-name": "update-{sha}"
         },
         "jira": {
-            "protocol": "http",
-            "host": "jira.com",
-            "port": 80,
-            "user": "tester",
-            "password": "*******",
-            "api": "2"
+            "protocol" : "http",
+            "host" : "my.wezzet.com",
+            "port" : 80,
+            "user" : "anovikov",
+            "password" : "Heebie9t",
+            "api" : "2"
+        },
+        "notification" : {
+            "token" : "41a30b07a076a5894e8658be8b4517",
+            "room" : 961223,
+            "from" : "[CIW]",
+            "color" : "green",
+            "format" : "html",
+            "notify" : true,
+            "separator" : "<br>",
+            "messages" : {
+                "buildComplete" : "Сборка и установка версии <strong>{version-name}</strong> по проекту <strong>{project-name}</strong> завершена!",
+                "versionLink" : "Перейти в <a href='{version-link}'>{version-name}</a>",
+                "projectLink" : "Перейти в <a href='{project-link}'>{project-name}</a>"
+            },
+            "links" : {
+                "project" : "http://my.wezzet.com/jira/browse/{project-key}/",
+                "version" : "http://my.wezzet.com/jira/browse/{project-key}/fixforversion/{version-id}/"
+            }
         }
     }
 }

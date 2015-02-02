@@ -69,6 +69,10 @@ Jira.prototype.checkUnresolvedIssue = function(callback) {
 		if(count) {
 			console.warn('[JIRA] В версии ' + this.manager.store.get('jiraNameVersion') + ' имеются незакрытые задачи: ', count);
 
+			this.issue(function(){
+				console.log(a);
+			});
+
 			this.manager.store.get('rli').question('[JIRA] Хотите продолжить? [y/N]', function(answer) {
 				if(answer.match(/^y(es)?$/i)) {
 					callback(null, count);
@@ -81,6 +85,25 @@ Jira.prototype.checkUnresolvedIssue = function(callback) {
 		}
 
 	}.bind(this));
+};
+
+Jira.prototype.issue = function(callback) {
+
+	this.connect.searchJira('project=' + this.manager.store.get('jiraProjectKey') + ' AND fixVersion=' + this.manager.store.get('jiraNameVersion'), {
+		maxResults : 100,
+		fields : [
+			'summary',
+			'reporter',
+			'status',
+			'project',
+			'components',
+			'fixVersions',
+			'assignee'
+		]
+	}, function(error, issue) {
+		callback && callback(error, JSON.parse(issue));
+	});
+
 };
 
 Jira.prototype._checkModuleConfig = function(callback) {

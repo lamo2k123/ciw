@@ -19,11 +19,7 @@ var fs          = require('fs'),
     Transmitted = require('./modules/transmitted')(Manager),
     Checker     = require('./modules/checker')(Manager),
     Jira        = require('./modules/jira')(Manager),
-	Notification= require('./modules/notification')(Manager),
-
-
-    // Variables
-    config      = null;
+	Notification= require('./modules/notification')(Manager);
 
 // https://api.github.com/repos/lamo2k123/ci-wezzet/tags
 
@@ -38,15 +34,15 @@ Manager.store.set({
 
 
 async.series([
-    //Updater.run.bind(Updater),
+    Updater.run.bind(Updater),
     Transmitted.run.bind(Transmitted),
-    //Checker.run.bind(Checker),
-    //Jira.run.bind(Jira)
+    Checker.run.bind(Checker),
+    Jira.run.bind(Jira)
 ], function(error) {
     if(error)
         throw error;
 
-    console.log(Manager.config.get('dir'));
+    console.log(Manager.store.get('transmittedFolder'));
 
     process.exit(0);
 });
@@ -55,15 +51,12 @@ return;
 
 async.series([
 ], function() {
+    var jira = new JiraApi(Manager.config.get('service.jira.protocol'), Manager.config.get('service.jira.host'), Manager.config.get('service.jira.port'), Manager.config.get('service.jira.user'), Manager.config.get('service.jira.password'), Manager.config.get('service.jira.api'));
 
-    var project = version = versionId = prevCommand = pckVersion = folder = jiraNameVersion = jiraProjectName = jiraProjectKey = null,
+
+    var prevCommand = pckVersion = null,
         issuesVersion = [],
-        flag    = step2 = installFlag = stopNode = false,
-        jira    = new JiraApi(config.service.jira.protocol, config.service.jira.host, config.service.jira.port, config.service.jira.user, config.service.jira.password, config.service.jira.api);
-
-    project = Statement.project;
-    version = Statement.version;
-    folder = Statement.folder;
+        flag    = step2 = installFlag = stopNode = false;
 
     async.series([
 
@@ -88,27 +81,27 @@ async.series([
                             } else {
                                 log.info('Произведен переход в директорию:', Manager.config.get('dir'));
 
-                                sshObj.commands.push('git clone ' + Manager.config.get('project.' + project + '.git-repo') + ' ' + folder);
+                                sshObj.commands.push('git clone ' + Manager.config.get('project.' + Manager.store.get('transmittedProject') + '.git-repo') + ' ' + Manager.store.get('transmittedFolder'));
                             }
 
                             break;
 
-                        case ['git', 'clone', config.projects[project]['git-repo'], folder].join(' '):
-                            log.info('Клонирование репозитория:', config.projects[project]['git-repo']);
+                        case ['git', 'clone', Manager.config.get('projects')[Manager.store.get('transmittedProject')]['git-repo'], Manager.store.get('transmittedFolder')].join(' '):
+                            log.info('Клонирование репозитория:', Manager.config.get('projects')[Manager.store.get('transmittedProject')]['git-repo']);
 
-                            if(response.indexOf("fatal: destination path '" + folder + "' already exists and is not an empty directory.") !== -1) {
-                                log.warn('Директория для клонирования не пустая:', folder);
+                            if(response.indexOf("fatal: destination path '" + Manager.store.get('transmittedFolder') + "' already exists and is not an empty directory.") !== -1) {
+                                log.warn('Директория для клонирования не пустая:', Manager.store.get('transmittedFolder'));
                             }
 
-                            sshObj.commands.push(['cd', folder].join(' '));
+                            sshObj.commands.push(['cd', Manager.store.get('transmittedFolder')].join(' '));
 
                             break;
 
-                        case ['cd', folder].join(' '):
+                        case ['cd', Manager.store.get('transmittedFolder')].join(' '):
                             if(response.indexOf('No such file or directory') !== -1) {
-                                log.error('Не удалось перейти в директорию ' + folder + '!');
+                                log.error('Не удалось перейти в директорию ' + Manager.store.get('transmittedFolder') + '!');
                             } else {
-                                log.info('Произведен переход в директорию: ' + [config.dir, folder].join('/'));
+                                log.info('Произведен переход в директорию: ' + [Manager.config.get('dir'), Manager.store.get('transmittedFolder')].join('/'));
 
                                 sshObj.commands.push('git rev-parse --abbrev-ref HEAD');
                             }
@@ -116,54 +109,54 @@ async.series([
                             break;
 
                         case 'git rev-parse --abbrev-ref HEAD':
-                            if(prevCommand == ['cd', folder].join(' ')) {
-                                if(response.split('\r\n')[1] === config.branch.dev) {
-                                    sshObj.commands.push(['git pull origin', config.branch.dev].join(' '));
+                            if(prevCommand == ['cd', Manager.store.get('transmittedFolder')].join(' ')) {
+                                if(response.split('\r\n')[1] === Manager.config.get('branch.dev')) {
+                                    sshObj.commands.push(['git pull origin', Manager.config.get('branch.dev')].join(' '));
                                 } else {
-                                    sshObj.commands.push(['git checkout -b', config.branch.dev].join(' '));
+                                    sshObj.commands.push(['git checkout -b', Manager.config.get('branch.dev')].join(' '));
                                 }
 
                             }
-                            else if(prevCommand == ['git checkout -b', config.branch.dev].join(' ')) {
-                                if(response.split('\r\n')[1] === config.branch.dev) {
-                                    sshObj.commands.push(['git pull origin', config.branch.dev].join(' '));
+                            else if(prevCommand == ['git checkout -b', Manager.config.get('branch.dev')].join(' ')) {
+                                if(response.split('\r\n')[1] === Manager.config.get('branch.dev')) {
+                                    sshObj.commands.push(['git pull origin', Manager.config.get('branch.dev')].join(' '));
                                 } else {
-                                    log.error('Переключение на ветку ' + config.branch.dev + ' не удалось. РАЗБИРАЙСЯ САМ! ПОКЕДО!');
+                                    log.error('Переключение на ветку ' + Manager.config.get('branch.dev') + ' не удалось. РАЗБИРАЙСЯ САМ! ПОКЕДО!');
                                 }
                             }
-                            else if(prevCommand == ['git checkout -b', config.branch.release].join(' ')) {
-                                if(response.split('\r\n')[1] === config.branch.release) {
-                                    sshObj.commands.push(['git pull origin', config.branch.release].join(' '));
+                            else if(prevCommand == ['git checkout -b', Manager.config.get('branch.release')].join(' ')) {
+                                if(response.split('\r\n')[1] === Manager.config.get('branch.release')) {
+                                    sshObj.commands.push(['git pull origin', Manager.config.get('branch.release')].join(' '));
                                 } else {
-                                    log.error('Переключение на ветку ' + config.branch.release + ' не удалось. РАЗБИРАЙСЯ САМ! ПОКА!');
+                                    log.error('Переключение на ветку ' + Manager.config.get('branch.release') + ' не удалось. РАЗБИРАЙСЯ САМ! ПОКА!');
                                 }
                             }
 
                             break;
 
-                        case ['git checkout -b', config.branch.dev].join(' '):
-                            log.info('Переключение на ветку: ' + config.branch.dev);
+                        case ['git checkout -b', Manager.config.get('branch.dev')].join(' '):
+                            log.info('Переключение на ветку: ' + Manager.config.get('branch.dev'));
 
                             sshObj.commands.push('git rev-parse --abbrev-ref HEAD');
 
                             break;
 
-                        case ['git pull origin', config.branch.dev].join(' '):
-                            log.info('Ветка обновлена ' + config.branch.dev);
+                        case ['git pull origin', Manager.config.get('branch.dev')].join(' '):
+                            log.info('Ветка обновлена ' + Manager.config.get('branch.dev'));
 
-                            sshObj.commands.push(['git checkout -b', config.branch.release].join(' '));
+                            sshObj.commands.push(['git checkout -b', Manager.config.get('branch.release')].join(' '));
 
                             break;
 
-                        case ['git checkout -b', config.branch.release].join(' '):
-                            log.info('Переключение на ветку ' + config.branch.release);
+                        case ['git checkout -b', Manager.config.get('branch.release')].join(' '):
+                            log.info('Переключение на ветку ' + Manager.config.get('branch.release'));
 
                             sshObj.commands.push('git rev-parse --abbrev-ref HEAD');
 
                             break;
 
-                        case ['git pull origin', config.branch.release].join(' '):
-                            log.info('Ветка обновлена: ' + config.branch.release);
+                        case ['git pull origin', Manager.config.get('branch.release')].join(' '):
+                            log.info('Ветка обновлена: ' + Manager.config.get('branch.release'));
 
 
                             // @TODO: Сравнение лога с jira
@@ -178,41 +171,41 @@ async.series([
                             break;
 
                         case 'git tag' :
-                            response = response.replace(folder, '');
+                            response = response.replace(Manager.store.get('transmittedFolder'), '');
 
-                            if(response.indexOf(version) !== -1) {
-                                sshObj.commands.push('git merge ' + config.branch.dev);
-                                log.info('Тег ' + version + ' уже существует, значит делае слияние.');
+                            if(response.indexOf(Manager.store.get('transmittedVersion')) !== -1) {
+                                sshObj.commands.push('git merge ' + Manager.config.get('branch.dev'));
+                                log.info('Тег ' + Manager.store.get('transmittedVersion') + ' уже существует, значит делае слияние.');
                             } else {
-                                sshObj.commands.push('git tag ' + version);
-                                log.info('Создание тега ' + version);
+                                sshObj.commands.push('git tag ' + Manager.store.get('transmittedVersion'));
+                                log.info('Создание тега ' + Manager.store.get('transmittedVersion'));
                             }
                             break;
 
-                        case 'git tag ' + version:
-                            response = response.replace(folder, '');
+                        case 'git tag ' + Manager.store.get('transmittedVersion'):
+                            response = response.replace(Manager.store.get('transmittedFolder'), '');
 
-                            if(response.indexOf(version) !== -1) {
-                                log.info('Создан тег ' + version);
+                            if(response.indexOf(Manager.store.get('transmittedVersion')) !== -1) {
+                                log.info('Создан тег ' + Manager.store.get('transmittedVersion'));
                                 sshObj.commands.push('git push --tags');
                                 log.info('Отправка тегов');
                             } else {
-                                log.error('Произошла ошибка при создание тега ' + version);
+                                log.error('Произошла ошибка при создание тега ' + Manager.store.get('transmittedVersion'));
                             }
 
                             break;
 
                         case 'git push --tags':
-                            sshObj.commands.push('git merge ' + config.branch.dev);
-                            log.info('Слияние ветки ' + config.branch.dev + ' с веткой ' + config.branch.release);
+                            sshObj.commands.push('git merge ' + Manager.config.get('branch.dev'));
+                            log.info('Слияние ветки ' + Manager.config.get('branch.dev') + ' с веткой ' + Manager.config.get('branch.release'));
                             break;
 
-                        case 'git merge ' + config.branch.dev:
-                            sshObj.commands.push('git push origin ' + config.branch.release);
+                        case 'git merge ' + Manager.config.get('branch.dev'):
+                            sshObj.commands.push('git push origin ' + Manager.config.get('branch.release'));
                             log.info('Отправка результатов слияния в репозиторий.');
                             break;
 
-                        case 'git push origin ' + config.branch.release :
+                        case 'git push origin ' + Manager.config.get('branch.release') :
                             sshObj.commands.push('./bin/deploy/build.sh -a');
                             log.info('Сборка RPM пакета.');
 
@@ -235,7 +228,7 @@ async.series([
                     }
 
                     if(command.indexOf('./bin/deploy/build.sh -u=') !== -1) {
-                        sshObj.commands.push('rm -rf ' + [config.dir, folder].join('/'));
+                        sshObj.commands.push('rm -rf ' + [Manager.config.get('dir'), Manager.store.get('transmittedFolder')].join('/'));
                         log.info('Удаление временной директории.');
                         step2 = true;
                     }
@@ -245,7 +238,7 @@ async.series([
                 onCommandProcessing : function onCommandProcessing( command, response, sshObj, stream )  {
                     if (command.indexOf('./bin/deploy/build.sh -u=') !== -1 && response.indexOf("password") != -1 && !flag) {
                         log.info('Подтверждение паролем отправки на repo.wezzet.com');
-                        stream.write(config.service.repo.password + '\n');
+                        stream.write(Manager.config.get('service.repo.password') + '\n');
                         flag = true;
                     }
                 },
@@ -253,7 +246,7 @@ async.series([
                     log.error('Таймаут:', command);
                 },
                 onEnd: function(sessionText, sshObj) {
-                    fs.writeFile([__dirname, folder + '.log'].join('/'), sessionText, function(error) {
+                    fs.writeFile([__dirname, Manager.store.get('transmittedFolder') + '.log'].join('/'), sessionText, function(error) {
                         if(error) {
                             log.error(error);
                         } else {
@@ -270,23 +263,18 @@ async.series([
             SSH.connect();
             SSH
                 .on('connect', function() {
-                    log.mark('Установка соединения с ' + config.service.vm.host + ':' + config.service.vm.user);
+                    log.mark('Установка соединения с ' + Manager.config.get('service.vm.host') + ':' + Manager.config.get('service.vm.userName'));
                 })
                 .on('ready', function() {
-                    log.mark('Соединение с ' + config.service.vm.host + ':' + config.service.vm.user + ' установлено.');
+                    log.mark('Соединение с ' + Manager.config.get('service.vm.host') + ':' + Manager.config.get('service.vm.userName') + ' установлено.');
                 });
 
         },
 
         function(callback) {
             var SSH2 = new SSH2Shell({
-                server : {
-                    host : config.service.public.host,
-                    port : config.service.public.port,
-                    userName : config.service.public.user,
-                    password : config.service.public.password
-                },
-                idleTimeOut: config.timeout,
+                server : Manager.config.get('service.public'),
+                idleTimeOut: Manager.config.get('timeout'),
                 commands:      [
                     'sudo -s'
                 ],
@@ -302,22 +290,22 @@ async.series([
                     }
 
                     if(installFlag && !stopNode) {
-                        sshObj.commands.push('service ' + project.toLowerCase() + ' stop');
-                        log.info('Остановка NODEJS', project.toLowerCase());
+                        sshObj.commands.push('service ' + Manager.store.get('transmittedProject').toLowerCase() + ' stop');
+                        log.info('Остановка NODEJS', Manager.store.get('transmittedProject').toLowerCase());
                         stopNode = true;
                     }
 
-                    if(command == 'service ' + project.toLowerCase() + ' stop') {
-                        sshObj.commands.push('service ' + project.toLowerCase() + ' start');
-                        log.info('Запуск NODEJS', project.toLowerCase());
+                    if(command == 'service ' + Manager.store.get('transmittedProject').toLowerCase() + ' stop') {
+                        sshObj.commands.push('service ' + Manager.store.get('transmittedProject').toLowerCase() + ' start');
+                        log.info('Запуск NODEJS', Manager.store.get('transmittedProject').toLowerCase());
                     }
 
                     prevCommand = command;
                 },
                 onCommandProcessing : function onCommandProcessing( command, response, sshObj, stream )  {
-                    if (response.indexOf('password for ' + config.service.public.user) != -1) {
+                    if (response.indexOf('password for ' + Manager.config.get('service.public.userName')) != -1) {
                         log.info('Подтверждение SUDO паролем');
-                        stream.write(config.service.public.password + '\n');
+                        stream.write(Manager.config.get('service.public.password') + '\n');
                     }
 
                     if (response.indexOf('[y/N]') != -1 && !installFlag) {
@@ -328,9 +316,9 @@ async.series([
                 },
                 onEnd: function(sessionText, sshObj) {
 					// Arguments: jiraVersionId, jiraProjectKey, jiraVersionName, jiraProjectName
-					Manager.events.emit('notification:hip-chat:buildComplete', versionId, jiraProjectKey, jiraNameVersion, jiraProjectName);
+					Manager.events.emit('notification:hip-chat:buildComplete', Manager.store.get('jiraVersionId'), Manager.store.get('jiraProjectKey'), Manager.store.get('jiraNameVersion'), Manager.store.get('jiraProjectName'));
 
-                    fs.writeFile([__dirname, folder + '.log'].join('/'), sessionText, function(error) {
+                    fs.writeFile([__dirname, Manager.store.get('transmittedFolder') + '.log'].join('/'), sessionText, function(error) {
                         if(error) {
                             log.error(error);
                         } else {
@@ -347,17 +335,17 @@ async.series([
             SSH2.connect();
             SSH2
                 .on('connect', function() {
-                    log.mark('Установка соединения с ' + config.service.public.host + ':' + config.service.public.user);
+                    log.mark('Установка соединения с ' + Manager.config.get('service.public.host') + ':' + Manager.config.get('service.public.userName'));
                 })
                 .on('ready', function() {
-                    log.mark('Соединение с ' + config.service.public.host + ':' + config.service.public.user + ' установлено.');
+                    log.mark('Соединение с ' + Manager.config.get('service.public.host') + ':' + Manager.config.get('service.public.userName') + ' установлено.');
                 });
         },
 
         function(callback) {
-            log.info('Получение списка задач версии ' + jiraNameVersion);
+            log.info('Получение списка задач версии ' + Manager.store.get('jiraNameVersion'));
 
-            jira.searchJira('project=DYNB AND fixVersion=' + jiraNameVersion, {
+            jira.searchJira('project=' + Manager.store.get('jiraProjectKey') + ' AND fixVersion=' + Manager.store.get('jiraNameVersion'), {
                 maxResults : 100,
                 fields : ['summary', 'reporter', 'status', 'project', 'components', 'fixVersions', 'assignee']
             }, function(error, searchResult) {
@@ -365,6 +353,7 @@ async.series([
                 if(error || !searchResult) {
                     log.error('Произошла ошибка при получение списка задач.');
                 } else {
+                    console.log(JSON.parse(searchResult).issues);
                     issuesVersion = JSON.parse(searchResult).issues;
                 }
 
