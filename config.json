@@ -2,14 +2,15 @@
     "dir": "builds-tmp",
     "commands" : {
         "clone"     : "git clone {repo} {folder}",
+        "author"    : "git config user.name \"[CIW]\"",
         "pull"      : "git pull",
         "checkout"  : "git checkout {branch}",
         "branch"    : "git rev-parse --abbrev-ref HEAD",
         "tags"      : "git tag",
         "create-tag": "git tag {version}",
         "push-tag"  : "git push --tags",
-        "merge"     : "git merge origin/{branch}",
-        "push"      : "git push"
+        "merge"     : "git merge origin/{branch} --no-ff",
+        "push"      : "git push origin {branch}"
     },
 
 

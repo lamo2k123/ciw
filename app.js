@@ -38,8 +38,7 @@ async.series([
     //Jira.run.bind(Jira),
     // Клонирование репозитория
     function(callback) {
-        var command = Manager.config.get('commands.clone'),
-            out     = null;
+        var command = Manager.config.get('commands.clone');
 
         command = command.replace('{repo}', Manager.config.get('projects.' + Manager.store.get('transmittedProject') + '.git-repo'));
         command = command.replace('{folder}', Manager.store.get('transmittedFolder'));
@@ -50,15 +49,31 @@ async.series([
             if(error !== null)
                 throw error;
 
+            if(stderr) {
+                console.log(stderr + '\n' +  stdout);
+            }
+
+            callback && callback(null);
+        });
+    },
+    // User
+    function(callback) {
+        var command = Manager.config.get('commands.author'),
+            out     = null;
+
+        childProcess.exec(command, {
+            cwd : path.join(__dirname, Manager.config.get('dir'), Manager.store.get('transmittedFolder'))
+        }, function(error, stdout, stderr) {
+            if(error !== null)
+                throw error;
+
             out = stderr + '\n' +  stdout;
 
-            console.log(out);
-
-            if(out.search('Initialized empty Git repository in ' + path.join(__dirname, Manager.config.get('dir'), Manager.store.get('transmittedFolder'), '.git')) !== -1) {
-                callback && callback(null);
-            } else {
+            if(stderr) {
                 console.log(out);
             }
+
+            callback && callback(null);
         });
     },
     // Переход в ветку release
@@ -163,9 +178,8 @@ async.series([
 
                 out = stderr + '\n' +  stdout;
 
-                console.log('Отправка тегов в origin', out.indexOf('new tag'));
                 // @TODO: Вставить регулярку на проверку полного совпадения
-                if(out.indexOf('new tag')) {
+                if(out.indexOf('new tag') !== -1) {
                     callback && callback(null);
                 } else {
                     console.log(out);
@@ -178,7 +192,7 @@ async.series([
         var command = Manager.config.get('commands.merge'),
             out     = null;
 
-        command = command.replace('{branch}', Manager.config.get('branch.release'));
+        command = command.replace('{branch}', Manager.config.get('branch.dev'));
 
         childProcess.exec(command, {
             cwd : path.join(__dirname, Manager.config.get('dir'), Manager.store.get('transmittedFolder'))
@@ -188,9 +202,9 @@ async.series([
 
             out = stderr + '\n' + stdout;
 
-            console.log(out.indexOf('Already up-to-date.'));
+            console.log(out);
 
-            if(out.indexOf('Already up-to-date.')) {
+            if(out.indexOf('Merge') !== -1) {
                 callback && callback(null);
             } else {
                 console.log(out);
@@ -201,6 +215,8 @@ async.series([
     function(callback) {
         var command = Manager.config.get('commands.push'),
             out     = null;
+
+        command = command.replace('{branch}', Manager.config.get('branch.release'));
 
         childProcess.exec(command, {
             cwd : path.join(__dirname, Manager.config.get('dir'), Manager.store.get('transmittedFolder'))
@@ -213,7 +229,7 @@ async.series([
             console.log('PUSH', out.indexOf(Manager.config.get('branch.release') + ' -> ' + Manager.config.get('branch.release')), out);
             // @TODO: Вставить регулярку на проверку полного совпадения
             //    59f76f6..c8364f4  test-release -> test-release
-            if(out.indexOf(Manager.config.get('branch.release') + ' -> ' + Manager.config.get('branch.release'))) {
+            if(out.indexOf(Manager.config.get('branch.release') + ' -> ' + Manager.config.get('branch.release')) !== -1) {
                 callback && callback(null);
             } else {
                 console.log(out);
