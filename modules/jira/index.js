@@ -69,9 +69,11 @@ Jira.prototype.checkUnresolvedIssue = function(callback) {
 		if(count) {
 			console.warn('[JIRA] В версии ' + this.manager.store.get('jiraNameVersion') + ' имеются незакрытые задачи: ', count);
 
+/*
 			this.issue(function(){
 				console.log(a);
 			});
+*/
 
 			this.manager.store.get('rli').question('[JIRA] Хотите продолжить? [y/N]', function(answer) {
 				if(answer.match(/^y(es)?$/i)) {

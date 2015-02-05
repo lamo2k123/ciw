@@ -1,5 +1,18 @@
 {
-    "dir": "/tmp",
+    "dir": "builds-tmp",
+    "commands" : {
+        "clone"     : "git clone {repo} {folder}",
+        "pull"      : "git pull",
+        "checkout"  : "git checkout {branch}",
+        "branch"    : "git rev-parse --abbrev-ref HEAD",
+        "tags"      : "git tag",
+        "create-tag": "git tag {version}",
+        "push-tag"  : "git push --tags",
+        "merge"     : "git merge origin/{branch}",
+        "push"      : "git push"
+    },
+
+
     "branch": {
         "dev": "test-develop",
         "release": "test-release"

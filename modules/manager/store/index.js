@@ -8,7 +8,7 @@ var ManagerStore = function() {
 };
 
 ManagerStore.prototype.get = function(key) {
-	return (key && this.storage[key]) ? this.storage[key] : null;
+	return (key && this.storage[key] !== null) ? this.storage[key] : null;
 };
 
 ManagerStore.prototype.set = function(key, value) {
