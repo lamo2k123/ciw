@@ -1,41 +1,39 @@
 {
     "dir": "builds-tmp",
     "commands" : {
-        "clone"     : "git clone {repo} {folder}",
-        "author"    : "git config user.name \"[CIW]\"",
-        "pull"      : "git pull",
-        "checkout"  : "git checkout {branch}",
-        "branch"    : "git rev-parse --abbrev-ref HEAD",
-        "tags"      : "git tag",
-        "create-tag": "git tag {version}",
-        "push-tag"  : "git push --tags",
-        "merge"     : "git merge origin/{branch} --no-ff",
-        "push"      : "git push origin {branch}"
+        "git"   : {
+            "clone"     : "git clone {repo} {folder}",
+            "author"    : "git config user.name \"[CIW]\"",
+            "pull"      : "git pull",
+            "checkout"  : "git checkout {branch}",
+            "branch"    : "git rev-parse --abbrev-ref HEAD",
+            "tags"      : "git tag",
+            "create-tag": "git tag {version}",
+            "push-tag"  : "git push --tags",
+            "merge"     : "git merge origin/{branch} --no-ff",
+            "push"      : "git push origin {branch}"
+        },
+        "build": {
+            "deploy" : "./bin/deploy/build.sh -a",
+            "upload" : "./bin/deploy/build.sh -u={rpm}"
+        },
+        "remove" : "rm -rf {folder}",
+        "install" : "ssh -p {port} {user}@{host} 'sudo yum clean all; sudo yum install {package} -y'",
+        "stop" : "ssh -p {port} {user}@{host} 'sudo service {project} stop'",
+        "start" : "ssh -p {port} {user}@{host} 'sudo service {project} start'"
     },
-
-
     "branch": {
         "dev": "test-develop",
         "release": "test-release"
     },
-    "timeout": 30000,
     "service": {
-        "repo": {
-            "password": "BBeriqpr2k123"
-        },
-        "vm": {
-            "userName": "anovikov",
-            "password": "Aa123456",
-            "host": "vm-dev29",
-            "port": 1022
-        },
         "public": {
-            "userName": "anovikov",
-            "password" : "Aa123456",
+            "user" : "anovikov",
             "host" : "club01-public.wplatform.net",
             "port" : 1022
         }
     },
+
     "projects": {
         "dynbls" : {
             "git-repo" : "ssh://git@stash.wezzet.com:7999/dynbls/node.git",
