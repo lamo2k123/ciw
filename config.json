@@ -33,7 +33,6 @@
             "port" : 1022
         }
     },
-
     "projects": {
         "dynbls" : {
             "git-repo" : "ssh://git@stash.wezzet.com:7999/dynbls/node.git",
