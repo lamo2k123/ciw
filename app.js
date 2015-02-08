@@ -30,12 +30,14 @@ Manager.store.set({
 });
 
 async.series([
-    Updater.run.bind(Updater),
+    //Updater.run.bind(Updater),
     Transmitted.run.bind(Transmitted),
-    Checker.run.bind(Checker),
-    //Jira.run.bind(Jira),
+    //Checker.run.bind(Checker),
+    Jira.run.bind(Jira),
     // Клонирование репозитория
     function(callback) {
+        callback('aaaaaaaaaaaaaaaaaaa');
+
         var command = Manager.config.get('commands.git.clone');
 
         command = command.replace('{repo}', Manager.config.get('projects.' + Manager.store.get('transmittedProject') + '.git-repo'));
