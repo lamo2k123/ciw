@@ -23,13 +23,7 @@ Jira.prototype.checkProject = function(callback) {
 	var projectName = 'projects.' + this.manager.store.get('transmittedProject') + '.jira.project-name',
 		versionName = 'projects.' + this.manager.store.get('transmittedProject') + '.jira.version-name';
 
-	console.info('[JIRA] Проверка проекта ' + this.manager.config.get(projectName) + ' в JIRA.');
-
-	this.connect.getProject(this.manager.config.get(projectName), function(error, projectJira) {
-		if(error) {
-			// @TODO:
-		}
-
+	this.connect.jira.project.project(this.manager.config.get(projectName), function(projectJira) {
 		if(!projectJira || _.isEmpty(projectJira)) {
 			console.error('[JIRA] Проект ' + this.manager.config.get(projectName) + ' не найден в JIRA!');
 			process.exit(0);
@@ -52,46 +46,59 @@ Jira.prototype.checkProject = function(callback) {
 				process.exit(0);
 			} else {
 				this.manager.store.set('jiraVersionId', versionJira.id);
-				callback(null);
+				callback && callback(null);
 			}
 		}
 	}.bind(this));
+
 };
 
 Jira.prototype.checkUnresolvedIssue = function(callback) {
 	console.info('[JIRA] Проверка на наличие не закрытых задач в ' + this.manager.store.get('jiraNameVersion'));
 
-	this.connect.getUnresolvedIssueCount(this.manager.store.get('jiraVersionId'), function(error, count) {
-		if(error) {
-			// @TODO:
-		}
-
-		if(count) {
-			console.warn('[JIRA] В версии ' + this.manager.store.get('jiraNameVersion') + ' имеются незакрытые задачи: ', count);
-
+	this.issue(function(issue){
+		console.log(issue);
+	});
 /*
-			this.issue(function(){
-				console.log(a);
-			});
-*/
+
+	this.connect.jira.version.unresolvedIssueCount(this.manager.store.get('jiraVersionId'), function(result) {
+		if(result.issuesUnresolvedCount) {
+			console.warn('[JIRA] В версии ' + this.manager.store.get('jiraNameVersion') + ' имеются незакрытые задачи: ', result.issuesUnresolvedCount);
 
 			this.manager.store.get('rli').question('[JIRA] Хотите продолжить? [y/N]', function(answer) {
 				if(answer.match(/^y(es)?$/i)) {
-					callback(null, count);
+					callback(null, result.issuesUnresolvedCount);
 				} else {
 					process.exit(0);
 				}
 			});
 		} else {
-			callback(null, count);
+			callback(null, result.issuesUnresolvedCount);
 		}
 
 	}.bind(this));
+*/
+
 };
 
 Jira.prototype.issue = function(callback) {
+	this.connect.jira.search.search({
+		"jql": "project = "  + this.manager.store.get('jiraProjectKey') +  " AND fixVersion = "  + this.manager.store.get('jiraNameVersion'),
+		"startAt": 0,
+		"maxResults": 50,
+		"fields": [
+			'summary',
+			'reporter',
+			'status',
+			'project',
+			'components',
+			'fixVersions',
+			'assignee'
+		]
+	}, callback);
 
-	this.connect.searchJira('project=' + this.manager.store.get('jiraProjectKey') + ' AND fixVersion=' + this.manager.store.get('jiraNameVersion'), {
+/*
+	this.connect2.searchJira('project=' + this.manager.store.get('jiraProjectKey') + ' AND fixVersion=' + this.manager.store.get('jiraNameVersion'), {
 		maxResults : 100,
 		fields : [
 			'summary',
@@ -103,8 +110,9 @@ Jira.prototype.issue = function(callback) {
 			'assignee'
 		]
 	}, function(error, issue) {
-		callback && callback(error, JSON.parse(issue));
+		//callback && callback(error, JSON.parse(issue));
 	});
+*/
 
 };
 
@@ -185,7 +193,8 @@ Jira.prototype._checkModuleConfig = function(callback) {
 };
 
 Jira.prototype._connect = function(callback) {
-	this.connect = new JiraApi(
+/*
+	this.connect2 = new JiraApi(
 		this.manager.config.get('modules.jira.protocol'),
 		this.manager.config.get('modules.jira.host'),
 		this.manager.config.get('modules.jira.port'),
@@ -193,6 +202,16 @@ Jira.prototype._connect = function(callback) {
 		this.manager.config.get('modules.jira.password'),
 		this.manager.config.get('modules.jira.api')
 	);
+*/
+
+	this.connect = require('atlassian-api')('jira', {
+		protocol : this.manager.config.get('modules.jira.protocol'),
+		host : this.manager.config.get('modules.jira.host'),
+		port : this.manager.config.get('modules.jira.port'),
+		user : this.manager.config.get('modules.jira.user'),
+		password : this.manager.config.get('modules.jira.password'),
+		api : this.manager.config.get('modules.jira.api')
+	});
 
 	callback(null);
 };
