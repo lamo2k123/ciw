@@ -2,6 +2,8 @@ var async	= require('async'),
 	_		= require('underscore'),
 	JiraApi = require('jira').JiraApi;
 
+var util = require('util');
+
 var Jira = function() {
 	if(!(this instanceof Jira)) {
 		return new Jira();
@@ -15,7 +17,7 @@ Jira.prototype.run = function(callback) {
 		this._checkModuleConfig.bind(this),
 		this._connect.bind(this),
 		this.checkProject.bind(this),
-		this.checkUnresolvedIssue.bind(this)
+		this.checkBuildStatusIssue.bind(this)
 	], callback);
 };
 
@@ -24,6 +26,7 @@ Jira.prototype.checkProject = function(callback) {
 		versionName = 'projects.' + this.manager.store.get('transmittedProject') + '.jira.version-name';
 
 	this.connect.jira.project.project(this.manager.config.get(projectName), function(projectJira) {
+
 		if(!projectJira || _.isEmpty(projectJira)) {
 			console.error('[JIRA] Проект ' + this.manager.config.get(projectName) + ' не найден в JIRA!');
 			process.exit(0);
@@ -32,7 +35,9 @@ Jira.prototype.checkProject = function(callback) {
 				jiraProject		: projectJira,
 				jiraNameVersion : this.manager.config.get(versionName).replace('{version}', this.manager.store.get('transmittedVersion')),
 				jiraProjectName : projectJira.name,
-				jiraProjectKey  : projectJira.key
+				jiraProjectKey  : projectJira.key,
+				jiraProjectLeadName : projectJira.lead.name,
+				jiraProjectLeadDisplayName : projectJira.lead.displayName
 			});
 
 			console.info('[JIRA] Проверка версии ' + this.manager.store.get('jiraNameVersion') + ' в ' + projectJira.name);
@@ -53,35 +58,9 @@ Jira.prototype.checkProject = function(callback) {
 
 };
 
-Jira.prototype.checkUnresolvedIssue = function(callback) {
+Jira.prototype.checkBuildStatusIssue = function(callback) {
 	console.info('[JIRA] Проверка на наличие не закрытых задач в ' + this.manager.store.get('jiraNameVersion'));
 
-	this.issue(function(issue){
-		console.log(issue);
-	});
-/*
-
-	this.connect.jira.version.unresolvedIssueCount(this.manager.store.get('jiraVersionId'), function(result) {
-		if(result.issuesUnresolvedCount) {
-			console.warn('[JIRA] В версии ' + this.manager.store.get('jiraNameVersion') + ' имеются незакрытые задачи: ', result.issuesUnresolvedCount);
-
-			this.manager.store.get('rli').question('[JIRA] Хотите продолжить? [y/N]', function(answer) {
-				if(answer.match(/^y(es)?$/i)) {
-					callback(null, result.issuesUnresolvedCount);
-				} else {
-					process.exit(0);
-				}
-			});
-		} else {
-			callback(null, result.issuesUnresolvedCount);
-		}
-
-	}.bind(this));
-*/
-
-};
-
-Jira.prototype.issue = function(callback) {
 	this.connect.jira.search.search({
 		"jql": "project = "  + this.manager.store.get('jiraProjectKey') +  " AND fixVersion = "  + this.manager.store.get('jiraNameVersion'),
 		"startAt": 0,
@@ -95,24 +74,26 @@ Jira.prototype.issue = function(callback) {
 			'fixVersions',
 			'assignee'
 		]
-	}, callback);
+	}, function(result) {
+		if(result && result.issues) {
+			var notReadyForBuild = 0;
 
-/*
-	this.connect2.searchJira('project=' + this.manager.store.get('jiraProjectKey') + ' AND fixVersion=' + this.manager.store.get('jiraNameVersion'), {
-		maxResults : 100,
-		fields : [
-			'summary',
-			'reporter',
-			'status',
-			'project',
-			'components',
-			'fixVersions',
-			'assignee'
-		]
-	}, function(error, issue) {
-		//callback && callback(error, JSON.parse(issue));
-	});
-*/
+			for(var i in result.issues) {
+				if(this.manager.config.get('modules.jira.statuses').indexOf(parseInt(result.issues[i].fields.status.id, 10)) < 4) {
+					if(this.manager.config.get('modules.jira.users.developers').indexOf(result.issues[i].fields.assignee.name) !== -1) {
+						notReadyForBuild++;
+						this.manager.events.emit('notification:hip-chat:issue-status', result.issues[i]);
+					}
+				}
+			}
+
+			if(!notReadyForBuild) {
+				callback && callback(null)
+			}
+		} else {
+			console.log('Not result');
+		}
+	}.bind(this));
 
 };
 
@@ -193,16 +174,6 @@ Jira.prototype._checkModuleConfig = function(callback) {
 };
 
 Jira.prototype._connect = function(callback) {
-/*
-	this.connect2 = new JiraApi(
-		this.manager.config.get('modules.jira.protocol'),
-		this.manager.config.get('modules.jira.host'),
-		this.manager.config.get('modules.jira.port'),
-		this.manager.config.get('modules.jira.user'),
-		this.manager.config.get('modules.jira.password'),
-		this.manager.config.get('modules.jira.api')
-	);
-*/
 
 	this.connect = require('atlassian-api')('jira', {
 		protocol : this.manager.config.get('modules.jira.protocol'),

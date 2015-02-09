@@ -58,86 +58,6 @@ Checker.prototype._checkConfigParams = function(callback) {
             }
         }.bind(this),
         function(callback) {
-            if(!this.manager.config.get('service.repo.password')) {
-                console.warn('[CHECKER] Не указана пароль к репозиторию repo.wezzet.com!');
-
-                this.manager.store.get('rli').question('[CHECKER] Введите пароль к repo.wezzet.com: ', function(answer) {
-                    if(answer) {
-                        this.manager.config.set('service.repo.password', answer);
-                    } else {
-                        process.exit(0);
-                    }
-
-                    callback(null);
-                }.bind(this));
-            } else {
-                callback(null);
-            }
-        }.bind(this),
-        function(callback) {
-            if(!this.manager.config.get('service.vm.host')) {
-                console.warn('[CHECKER] Не указана хост виртуалки разработчика (vm-dev)!');
-
-                this.manager.store.get('rli').question('[CHECKER] Введите хост vm-dev: ', function(answer) {
-                    if(answer) {
-                        this.manager.config.set('service.vm.host', answer);
-                    } else {
-                        process.exit(0);
-                    }
-
-                    callback(null);
-                }.bind(this));
-            } else {
-                callback(null);
-            }
-        }.bind(this),
-        function(callback) {
-            if(!this.manager.config.get('service.vm.port')) {
-                console.warn('[CHECKER] Не указана порт виртуалки разработчика (vm-dev)!');
-
-                this.manager.store.get('rli').question('[CHECKER] Введите порт vm-dev (Default: 1022): ', function(answer) {
-                    this.manager.config.set('service.vm.port', answer || 1022);
-                    callback(null);
-                }.bind(this));
-            } else {
-                callback(null);
-            }
-        }.bind(this),
-        function(callback) {
-            if(!this.manager.config.get('service.vm.userName')) {
-                console.warn('[CHECKER] Не указан пользователь от ' + this.manager.config.get('service.vm.host') + '!');
-
-                this.manager.store.get('rli').question('[CHECKER] Введите имя пользователя ' + this.manager.config.get('service.vm.host') + ': ', function(answer) {
-                    if(answer) {
-                        this.manager.config.set('service.vm.userName', answer);
-                    } else {
-                        process.exit(0);
-                    }
-
-                    callback(null);
-                }.bind(this));
-            } else {
-                callback(null);
-            }
-        }.bind(this),
-        function(callback) {
-            if(!this.manager.config.get('service.vm.password')) {
-                console.warn('[CHECKER] Не указана пароль пользователя ' + this.manager.config.get('service.vm.host') + '!');
-
-                this.manager.store.get('rli').question('[CHECKER] Введите пароль пользователя ' + this.manager.config.get('service.vm.host') + ': ', function(answer) {
-                    if(answer) {
-                        this.manager.config.set('service.vm.password', answer);
-                    } else {
-                        process.exit(0);
-                    }
-
-                    callback(null);
-                }.bind(this));
-            } else {
-                callback(null);
-            }
-        }.bind(this),
-        function(callback) {
             if(!this.manager.config.get('service.public.host')) {
                 console.warn('[CHECKER] Не указана хост ***** (Public)!');
 
@@ -167,29 +87,12 @@ Checker.prototype._checkConfigParams = function(callback) {
             }
         }.bind(this),
         function(callback) {
-            if(!this.manager.config.get('service.public.userName')) {
+            if(!this.manager.config.get('service.public.user')) {
                 console.warn('[CHECKER] Не указана пользователь от ' + this.manager.config.get('service.public.host') + '!');
 
                 this.manager.store.get('rli').question('[CHECKER] Введите имя пользователя ' + this.manager.config.get('service.public.host') + ': ', function(answer) {
                     if(answer) {
                         this.manager.config.set('service.public.userName', answer);
-                    } else {
-                        process.exit(0);
-                    }
-
-                    callback(null);
-                }.bind(this));
-            } else {
-                callback(null);
-            }
-        }.bind(this),
-        function(callback) {
-            if(!this.manager.config.get('service.public.password')) {
-                console.warn('[CHECKER] Не указана пароль пользователя ' + this.manager.config.get('service.public.host') + '!');
-
-                this.manager.store.get('rli').question('[CHECKER] Введите пароль пользователя ' + this.manager.config.get('service.public.host') + ': ', function(answer) {
-                    if(answer) {
-                        this.manager.config.set('service.public.password', answer);
                     } else {
                         process.exit(0);
                     }

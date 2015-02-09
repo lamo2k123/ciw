@@ -30,14 +30,12 @@ Manager.store.set({
 });
 
 async.series([
-    //Updater.run.bind(Updater),
+    Updater.run.bind(Updater),
     Transmitted.run.bind(Transmitted),
-    //Checker.run.bind(Checker),
+    Checker.run.bind(Checker),
     Jira.run.bind(Jira),
     // Клонирование репозитория
     function(callback) {
-        callback('aaaaaaaaaaaaaaaaaaa');
-
         var command = Manager.config.get('commands.git.clone');
 
         command = command.replace('{repo}', Manager.config.get('projects.' + Manager.store.get('transmittedProject') + '.git-repo'));
@@ -310,27 +308,6 @@ async.series([
             callback && callback(null);
         }
     },
-    // Clean
-    function(callback) {
-        console.info('Очистка!');
-        if(Manager.store.get('rpmPackageUpload')) {
-            var command = Manager.config.get('commands.remove');
-
-            command = command.replace('{folder}', Manager.store.get('transmittedFolder'));
-
-            childProcess.exec(command, {
-                cwd : path.join(__dirname, Manager.config.get('dir'))
-            }, function(error, stdout, stderr) {
-                if(error)
-                    throw error;
-
-                callback && callback(null);
-            });
-
-        } else {
-            callback && callback(null);
-        }
-    },
     // Установка пакета на public
     function(callback) {
         console.info('Установка пакета');
@@ -347,8 +324,7 @@ async.series([
                 childProcess.exec(command, {
                     cwd : path.join(__dirname, Manager.config.get('dir'))
                 }, function(error, stdout, stderr) {
-                    if(error)
-                        throw error;
+                    console.log(error, stdout, stderr);
 
                     if(/Complete!/.test(stdout)) {
                         Manager.store.set('rpmPackageInstall', true);
@@ -421,7 +397,7 @@ async.series([
     Manager.events.emit('notification:hip-chat:buildComplete', Manager.store.get('jiraVersionId'), Manager.store.get('jiraProjectKey'), Manager.store.get('jiraNameVersion'), Manager.store.get('jiraProjectName'));
 
 
-    console.log(Manager.store.get('transmittedFolder'));
-
-    process.exit(0);
+    //console.log(Manager.store.get('transmittedFolder'));
+    //
+    //process.exit(0);
 });

@@ -21,6 +21,7 @@ Notification.prototype.initHipChat = function() {
 		this.hipChat = new HipChatClient(this.config.token);
 
 		this.manager.events.on('notification:hip-chat:buildComplete', this.buildCompleteHipChat.bind(this));
+		this.manager.events.on('notification:hip-chat:issue-status', this.issueStatus.bind(this));
 	}
 
 	return this;
@@ -120,6 +121,70 @@ Notification.prototype.buildCompleteHipChat = function(jiraVersionId, jiraProjec
 		from			: this.config.from || '[CIW]',
 		message			: message.join(this.config.separator || '<br>'),
 		color			: this.config.color || 'green',
+		message_format 	: this.config.format || 'html',
+		notify			: this.config.notify || false
+	}, function(error, response) {
+		if(error) {
+			console.error('[NOTIFICATION] При отправке оповещения в Hip-Chat произошла ошибка!');
+			throw error;
+			// @TODO: Добавить запись ошибки в лог.
+		}
+
+		if(response.status === 'sent') {
+			console.info('[NOTIFICATION] Отправлено оповещение в Hip-Chat!');
+		} else {
+			console.warn('[NOTIFICATION] Не удалось отправить оповещение в Hip-Chat!');
+		}
+	});
+
+};
+
+Notification.prototype.issueStatus = function(issue) {
+	this.hipChat.api.rooms.message({
+		room_id			: this.config.room,
+		from			: this.config.from || '[CIW]',
+		message			: '@' + issue.fields.assignee.displayName.replace(' ', ''),
+		color			: this.config.color || 'green',
+		message_format 	: 'text',
+		notify			: this.config.notify || false
+	}, function(error, response) {
+		if(error) {
+			console.error('[NOTIFICATION] При отправке оповещения в Hip-Chat произошла ошибка!');
+			throw error;
+			// @TODO: Добавить запись ошибки в лог.
+		}
+
+		if(response.status === 'sent') {
+			console.info('[NOTIFICATION] Отправлено оповещение в Hip-Chat!');
+		} else {
+			console.warn('[NOTIFICATION] Не удалось отправить оповещение в Hip-Chat!');
+		}
+	});
+
+	var message = [];
+
+	var linksIssue = this.config.links.issue.replace(/{issue-key}/g, issue.key);
+	var messageIssueLink = this.config.messages.issueLink.replace(/{issue-link}/g, linksIssue);
+	messageIssueLink = messageIssueLink.replace(/{issue-key}/g, issue.key);
+	messageIssueLink = messageIssueLink.replace(/{issue-name}/g, issue.fields.summary);
+
+	var issueStatus = this.config.messages.issueStatus.replace(/{issue-link}/g, messageIssueLink);
+
+	var version = [];
+	for(var i in issue.fields.fixVersions) {
+		version.push(issue.fields.fixVersions[i].name);
+	}
+
+	issueStatus = issueStatus.replace(/{version}/g, version.join(', '));
+	issueStatus = issueStatus.replace(/{issue-status}/g, issue.fields.status.name);
+
+	message.push(issueStatus);
+
+	this.hipChat.api.rooms.message({
+		room_id			: this.config.room,
+		from			: this.config.from || '[CIW]',
+		message			: message.join(this.config.separator || '<br>'),
+		color			: 'red',
 		message_format 	: this.config.format || 'html',
 		notify			: this.config.notify || false
 	}, function(error, response) {

@@ -23,8 +23,8 @@
         "start" : "ssh -p {port} {user}@{host} 'sudo service {project} start'"
     },
     "branch": {
-        "dev": "test-develop",
-        "release": "test-release"
+        "dev": "develop",
+        "release": "release"
     },
     "service": {
         "public": {
@@ -53,6 +53,16 @@
             "rpm" : {
                 "project-name" : "Tls"
             }
+        },
+        "pl" : {
+            "git-repo" : "ssh://git@stash.wezzet.com:7999/dynbls/pl.git",
+            "jira" : {
+                "project-name" : "PL",
+                "version-name" : "NODE-{version}"
+            },
+            "rpm" : {
+                "project-name" : "PrintLine"
+            }
         }
     },
     "modules": {
@@ -67,7 +77,21 @@
             "port" : 80,
             "user" : "anovikov",
             "password" : "Heebie9t",
-            "api" : "2"
+            "api" : "2",
+            "users" : {
+                "developers" : [
+                    "anovikov",
+                    "omartynov",
+                    "aborovova",
+                    "elapin",
+                    "rabdusalamov",
+                    "dmorgachev"
+                ],
+                "managers" : [
+                    "durdin"
+                ]
+            },
+            "statuses" : [1, 4, 3, 5, 10007, 6, 10000, 10001]
         },
         "notification" : {
             "token" : "41a30b07a076a5894e8658be8b4517",
@@ -80,11 +104,14 @@
             "messages" : {
                 "buildComplete" : "Сборка и установка версии <strong>{version-name}</strong> по проекту <strong>{project-name}</strong> завершена!",
                 "versionLink" : "Перейти в <a href='{version-link}'>{version-name}</a>",
-                "projectLink" : "Перейти в <a href='{project-link}'>{project-name}</a>"
+                "projectLink" : "Перейти в <a href='{project-link}'>{project-name}</a>",
+                "issueLink" : "<a href='{issue-link}'>({issue-key}) {issue-name}</a>",
+                "issueStatus" : "Сборка версии {version} остановлена. Задача {issue-link} в статусе {issue-status}"
             },
             "links" : {
                 "project" : "http://my.wezzet.com/jira/browse/{project-key}/",
-                "version" : "http://my.wezzet.com/jira/browse/{project-key}/fixforversion/{version-id}/"
+                "version" : "http://my.wezzet.com/jira/browse/{project-key}/fixforversion/{version-id}/",
+                "issue" : "http://my.wezzet.com/jira/browse/{issue-key}"
             }
         }
     }
