@@ -36,6 +36,7 @@ async.series([
     Jira.run.bind(Jira),
     // Клонирование репозитория
     function(callback) {
+    	console.log('Клонирование репозитория.');
         var command = Manager.config.get('commands.git.clone');
 
         command = command.replace('{repo}', Manager.config.get('projects.' + Manager.store.get('transmittedProject') + '.git-repo'));
@@ -57,6 +58,7 @@ async.series([
     },
     // User
     function(callback) {
+    	console.log('Смена автора коммита.');
         var command = Manager.config.get('commands.git.author'),
             out     = null;
 
@@ -77,6 +79,7 @@ async.series([
     },
     // Переход в ветку release
     function(callback) {
+    	console.log('Переход в ветку ' + Manager.config.get('branch.release') + '.');
         var command = Manager.config.get('commands.git.checkout'),
             out     = null;
 
@@ -99,6 +102,7 @@ async.series([
     },
     // Проверка текущей ветки
     function(callback) {
+    	console.log('Проверка ветки.');
         var command = Manager.config.get('commands.git.branch'),
             out     = null;
 
@@ -119,6 +123,7 @@ async.series([
     },
     // Проверка тегов
     function(callback) {
+    	console.log('Проверка тегов.');
         var command = Manager.config.get('commands.git.tags'),
             out     = null;
 
@@ -144,6 +149,7 @@ async.series([
         if(Manager.store.get('repoTagStatus')) {
             callback && callback(null);
         } else {
+    		console.log('Создание тега.');
             var command = Manager.config.get('commands.git.create-tag'),
                 out     = null;
 
@@ -166,6 +172,7 @@ async.series([
         if(Manager.store.get('repoTagStatus')) {
             callback && callback(null);
         } else {
+    		console.log('Отправка тега.');
             var command = Manager.config.get('commands.git.push-tag'),
                 out     = null;
 
@@ -188,6 +195,7 @@ async.series([
     },
     // Merge dev -> release
     function(callback) {
+		console.log('Мерге веток.');
         var command = Manager.config.get('commands.git.merge'),
             out     = null;
 
@@ -210,6 +218,7 @@ async.series([
     },
     // Push merge result to release
     function(callback) {
+		console.log('Отправка в origin.');
         var command = Manager.config.get('commands.git.push'),
             out     = null;
 
