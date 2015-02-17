@@ -205,32 +205,46 @@ async.series([
                 callback && callback(null);
             } else {
                 console.log(out);
+                Manager.store.get('rli').question('Продолжить? [y/N]: ', function(answer) {
+			if(answer.match(/^y(es)?$/i)) {
+				Manager.store.set('force', true);
+				callback && callback(null);
+			} else {
+				process.exit(0);
+			}
+		}.bind(this));
             }
         });
     },
     // Push merge result to release
     function(callback) {
-        var command = Manager.config.get('commands.git.push'),
-            out     = null;
+    	if (Manager.store.get('force')) {
+    		callback && callback(null);
+    	} else {
+    		var command = Manager.config.get('commands.git.push'),
+            	out     = null;
 
-        command = command.replace('{branch}', Manager.config.get('branch.release'));
-
-        childProcess.exec(command, {
-            cwd : path.join(__dirname, Manager.config.get('dir'), Manager.store.get('transmittedFolder'))
-        }, function(error, stdout, stderr) {
-            if(error !== null)
-                throw error;
-
-            out = stderr + '\n' + stdout;
-
-            // @TODO: Вставить регулярку на проверку полного совпадения
-            //    59f76f6..c8364f4  test-release -> test-release
-            if(out.indexOf(Manager.config.get('branch.release') + ' -> ' + Manager.config.get('branch.release')) !== -1) {
-                callback && callback(null);
-            } else {
-                console.log(out);
-            }
-        });
+	        command = command.replace('{branch}', Manager.config.get('branch.release'));
+	
+	        childProcess.exec(command, {
+	            cwd : path.join(__dirname, Manager.config.get('dir'), Manager.store.get('transmittedFolder'))
+	        }, function(error, stdout, stderr) {
+	            if(error !== null)
+	                throw error;
+	
+	            out = stderr + '\n' + stdout;
+	
+	            // @TODO: Вставить регулярку на проверку полного совпадения
+	            //    59f76f6..c8364f4  test-release -> test-release
+	            if(out.indexOf(Manager.config.get('branch.release') + ' -> ' + Manager.config.get('branch.release')) !== -1) {
+	                callback && callback(null);
+	            } else {
+	                console.log(out);
+	            }
+	        });
+    	}
+    	
+        
     },
     // Сборка RPM пакета
     function(callback) {
