@@ -8,10 +8,16 @@
     "async": "~0.9.0",
     "colors": "~1.0.3",
     "unzip": "~0.1.11",
-    "request": "~2.48.0",
+    "request": "~2.81.0",
     "fs-extra": "~0.12.0",
     "hipchat-client": "~1.0.2",
     "color-log": "0.0.2",
-    "atlassian-api": "~0.1.0"
-  }
+    "atlassian-api": "~0.1.0",
+    "snyk": "^1.85.0"
+  },
+  "scripts": {
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
+  },
+  "snyk": true
 }
